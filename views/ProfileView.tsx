@@ -95,16 +95,16 @@ export const ProfileView = ({ config }: ProfileViewProps) => {
             <h3 className="font-bold text-lg z-10">Connect</h3>
             <div className="grid grid-cols-2 gap-3 mt-4 z-10">
                 {profile.github && (
-                    <a href={`https://${profile.github}`} target="_blank" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Github className="w-5 h-5" /></a>
+                    <a href={`https://${profile.github}`} target="_blank" rel="noreferrer" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Github className="w-5 h-5" /></a>
                 )}
                 {profile.twitter && (
-                    <a href={`https://${profile.twitter}`} target="_blank" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Twitter className="w-5 h-5" /></a>
+                    <a href={`https://${profile.twitter}`} target="_blank" rel="noreferrer" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Twitter className="w-5 h-5" /></a>
                 )}
                 {profile.socials?.linkedin && (
-                    <a href={profile.socials.linkedin} target="_blank" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Linkedin className="w-5 h-5" /></a>
+                    <a href={profile.socials.linkedin} target="_blank" rel="noreferrer" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Linkedin className="w-5 h-5" /></a>
                 )}
                 {profile.socials?.instagram && (
-                    <a href={profile.socials.instagram} target="_blank" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Instagram className="w-5 h-5" /></a>
+                    <a href={profile.socials.instagram} target="_blank" rel="noreferrer" className="bg-white/10 hover:bg-white/20 p-3 rounded-xl flex items-center justify-center transition-colors"><Instagram className="w-5 h-5" /></a>
                 )}
             </div>
         </div>
@@ -121,8 +121,8 @@ export const ProfileView = ({ config }: ProfileViewProps) => {
             </div>
         </div>
 
-        {/* 5. 技能云卡片 */}
-        <div className="md:col-span-2 bg-gradient-to-br from-[var(--theme-color)] to-purple-600 rounded-[32px] p-8 shadow-lg text-white relative overflow-hidden">
+        {/* 5. 技能云卡片（全宽） */}
+        <div className="md:col-span-4 bg-gradient-to-br from-[var(--theme-color)] to-purple-600 rounded-[32px] p-8 shadow-lg text-white relative overflow-hidden">
             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/20 rounded-full blur-2xl" />
             <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-4 opacity-80">

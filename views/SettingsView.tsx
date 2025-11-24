@@ -96,8 +96,9 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
            {/* 主内容区域 */}
            <div className="flex-1 bg-white rounded-[32px] shadow-sm border border-gray-200 p-8 sm:p-10 min-h-[600px] relative">
                
+
                {/* 保存按钮（浮动） */}
-               <div className="absolute top-8 right-8">
+               <div className="absolute top-8 right-8 z-10">
                    <button 
                      onClick={handleSave}
                      className="bg-black text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-gray-800 transition-all shadow-lg active:scale-95 flex items-center gap-2"
