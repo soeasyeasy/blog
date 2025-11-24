@@ -1,26 +1,42 @@
+/**
+ * 设置视图组件
+ * 提供网站各项配置的管理界面，包括通用设置、主题、个人资料、SEO 和友情链接
+ */
 
 import React, { useState } from "react";
+// 导入图标组件
 import { Save, Check, Trash2, Mail, Globe, MapPin, Briefcase, Building, Github, Twitter, Linkedin, Instagram, Sliders, Palette, Search as SearchIcon, Shield, UserCircle, Layout } from "lucide-react";
+// 导入类型定义
 import { SiteConfig, FriendLink, PRESET_THEMES } from "../types";
 
+// 设置视图组件属性接口
 interface SettingsViewProps {
-  config: SiteConfig;
-  onSaveConfig: (c: SiteConfig) => void;
+  config: SiteConfig;               // 当前站点配置
+  onSaveConfig: (c: SiteConfig) => void;  // 保存配置回调函数
 }
 
+// 设置视图组件
 export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
+  // 状态管理：活动标签页和临时配置
   const [activeTab, setActiveTab] = useState<"general" | "theme" | "profile" | "seo" | "friends">("general");
   const [tempConfig, setTempConfig] = useState<SiteConfig>(config);
+  // 新友情链接状态管理
   const [newFriendLink, setNewFriendLink] = useState<Partial<FriendLink>>({});
 
+  /**
+   * 处理保存配置
+   */
   const handleSave = () => {
     onSaveConfig(tempConfig);
     alert("设置已保存");
   };
 
+  /**
+   * 处理添加友情链接
+   */
   const handleAddFriendLink = () => {
     if (newFriendLink.name && newFriendLink.url) {
-        // ... (Logic from previous AdminDashboard)
+        // 构造新的友情链接对象
          const link: FriendLink = {
             id: Math.random().toString(36).substr(2, 9),
             name: newFriendLink.name,
@@ -29,14 +45,20 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
             description: newFriendLink.description,
             category: newFriendLink.category || "默认分类"
           };
+          // 更新临时配置
           setTempConfig({
             ...tempConfig,
             friendLinks: [...(tempConfig.friendLinks || []), link]
           });
+          // 清空表单
           setNewFriendLink({});
     }
   };
 
+  /**
+   * 处理删除友情链接
+   * @param id 友情链接 ID
+   */
   const handleDeleteFriendLink = (id: string) => {
       setTempConfig({
           ...tempConfig,
@@ -44,6 +66,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
       });
   };
 
+  // 侧边栏项组件
   const SidebarItem = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
     <button
       onClick={() => setActiveTab(id)}
@@ -57,7 +80,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pt-4 pb-20">
        <div className="flex flex-col md:flex-row gap-8">
-           {/* Sidebar */}
+           {/* 侧边栏 */}
            <div className="w-full md:w-64 shrink-0 space-y-1">
                <div className="px-4 mb-6">
                    <h2 className="text-2xl font-bold text-[#1D1D1F]">设置</h2>
@@ -70,10 +93,10 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                <SidebarItem id="friends" label="资源导航" icon={Layout} />
            </div>
 
-           {/* Main Content */}
+           {/* 主内容区域 */}
            <div className="flex-1 bg-white rounded-[32px] shadow-sm border border-gray-200 p-8 sm:p-10 min-h-[600px] relative">
                
-               {/* Save Button Floating */}
+               {/* 保存按钮（浮动） */}
                <div className="absolute top-8 right-8">
                    <button 
                      onClick={handleSave}
@@ -83,7 +106,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </button>
                </div>
 
-               {/* --- General Tab --- */}
+               {/* --- 通用设置标签页 --- */}
                {activeTab === "general" && (
                    <div className="space-y-8 max-w-2xl animate-fade-in">
                        <div>
@@ -92,15 +115,18 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                        </div>
                        
                        <div className="space-y-5">
+                            {/* 网站名称 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">网站名称 (Site Name)</label>
                                 <input type="text" value={tempConfig.siteName} onChange={e => setTempConfig({...tempConfig, siteName: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                             </div>
                             <div className="grid grid-cols-2 gap-5">
+                                {/* ICP 备案号 */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">ICP 备案号</label>
                                     <input type="text" value={tempConfig.icpNumber || ''} onChange={e => setTempConfig({...tempConfig, icpNumber: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                                 </div>
+                                {/* SSO 登录 */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">SSO 登录</label>
                                     <div className="flex items-center gap-4 h-[46px] px-2">
@@ -111,18 +137,22 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                     </div>
                                 </div>
                             </div>
+                            {/* Logo 图片 URL */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Logo 图片 URL</label>
                                 <input type="text" value={tempConfig.logoUrl || ''} onChange={e => setTempConfig({...tempConfig, logoUrl: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" placeholder="https://..." />
                             </div>
+                            {/* Hero 标题 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero 标题</label>
                                 <input type="text" value={tempConfig.heroTitle} onChange={e => setTempConfig({...tempConfig, heroTitle: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                             </div>
+                            {/* Hero 副标题 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero 副标题</label>
                                 <textarea rows={2} value={tempConfig.heroSubtitle} onChange={e => setTempConfig({...tempConfig, heroSubtitle: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                             </div>
+                            {/* Hero 背景图 URL */}
                              <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero 背景图 URL</label>
                                 <input type="text" value={tempConfig.heroImage || ''} onChange={e => setTempConfig({...tempConfig, heroImage: e.target.value})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
@@ -131,13 +161,14 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </div>
                )}
 
-               {/* --- Theme Tab --- */}
+               {/* --- 主题标签页 --- */}
                {activeTab === "theme" && (
                    <div className="space-y-8 max-w-2xl animate-fade-in">
                        <div>
                            <h3 className="text-xl font-bold text-gray-900 mb-1">外观与主题</h3>
                            <p className="text-sm text-gray-500">自定义全站的主色调。</p>
                        </div>
+                       {/* 预设主题颜色网格 */}
                        <div className="grid grid-cols-4 gap-4">
                            {PRESET_THEMES.map(theme => (
                                <button
@@ -155,6 +186,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                </button>
                            ))}
                        </div>
+                       {/* 自定义颜色值 */}
                        <div className="pt-6 border-t border-gray-100">
                            <label className="block text-sm font-medium text-gray-700 mb-2">自定义颜色值 (Hex)</label>
                            <div className="flex items-center gap-3">
@@ -165,7 +197,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </div>
                )}
 
-               {/* --- Profile Tab --- */}
+               {/* --- 个人资料标签页 --- */}
                {activeTab === "profile" && (
                    <div className="space-y-8 animate-fade-in">
                        <div>
@@ -174,7 +206,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                        </div>
                        
                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                           {/* Avatar & Name */}
+                           {/* 头像和姓名 */}
                            <div className="space-y-4">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">基本信息</label>
                                 <div className="flex items-center gap-4">
@@ -187,11 +219,12 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                 <textarea rows={3} value={tempConfig.profile.bio} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, bio: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Bio" />
                            </div>
 
-                           {/* Work */}
+                           {/* 工作信息 */}
                            <div className="space-y-4">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">职业信息</label>
                                 <input type="text" value={tempConfig.profile.jobTitle || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, jobTitle: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Job Title" />
                                 <input type="text" value={tempConfig.profile.company || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, company: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Company" />
+                                {/* 可雇佣状态切换 */}
                                 <div className="flex items-center justify-between bg-gray-50 p-3 rounded-xl">
                                     <span className="text-sm text-gray-600">Open to Work</span>
                                     <button onClick={() => setTempConfig({...tempConfig, profile: {...tempConfig.profile, availableForHire: !tempConfig.profile.availableForHire}})} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${tempConfig.profile.availableForHire ? 'bg-green-500' : 'bg-gray-200'}`}>
@@ -200,7 +233,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                 </div>
                            </div>
 
-                           {/* Socials */}
+                           {/* 社交网络 */}
                            <div className="space-y-4">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">社交网络</label>
                                 <div className="grid gap-3">
@@ -210,13 +243,14 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                 </div>
                            </div>
 
-                           {/* Skills */}
+                           {/* 技能栈 */}
                            <div className="space-y-4">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">技能栈</label>
                                 <input type="text" value={tempConfig.profile.skills?.join(", ") || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, skills: e.target.value.split(/[,，]/).map(s=>s.trim())}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="React, Node.js..." />
                            </div>
                        </div>
                        
+                       {/* README 内容 */}
                        <div className="pt-6">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">README 内容</label>
                             <textarea rows={6} value={tempConfig.profile.readme} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, readme: e.target.value}})} className="w-full font-mono text-sm rounded-xl border-gray-200" />
@@ -224,7 +258,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </div>
                )}
 
-               {/* --- SEO Tab --- */}
+               {/* --- SEO 标签页 --- */}
                {activeTab === "seo" && (
                    <div className="space-y-8 max-w-2xl animate-fade-in">
                        <div>
@@ -232,14 +266,17 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                            <p className="text-sm text-gray-500">配置 Meta 标签以提升搜索引擎排名。</p>
                        </div>
                         <div className="space-y-5">
+                            {/* 网站标题 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">网站标题 Title</label>
                                 <input type="text" value={tempConfig.seo.siteTitle || ''} onChange={e => setTempConfig({...tempConfig, seo: {...tempConfig.seo, siteTitle: e.target.value}})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                             </div>
+                            {/* 描述 */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">描述 Description</label>
                                 <textarea rows={3} value={tempConfig.seo.description || ''} onChange={e => setTempConfig({...tempConfig, seo: {...tempConfig.seo, description: e.target.value}})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
                             </div>
+                            {/* 关键词 */}
                              <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">关键词 Keywords</label>
                                 <input type="text" value={tempConfig.seo.keywords?.join(", ") || ''} onChange={e => setTempConfig({...tempConfig, seo: {...tempConfig.seo, keywords: e.target.value.split(/[,，]/).map(s=>s.trim())}})} className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" />
@@ -248,7 +285,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </div>
                )}
 
-               {/* --- Friends Tab --- */}
+               {/* --- 友情链接标签页 --- */}
                {activeTab === "friends" && (
                    <div className="space-y-8 animate-fade-in">
                         <div>
@@ -256,6 +293,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                            <p className="text-sm text-gray-500">管理友链与推荐资源。</p>
                        </div>
                        
+                       {/* 添加新资源表单 */}
                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
                            <h4 className="text-sm font-bold text-gray-900 mb-4">添加新资源</h4>
                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -267,6 +305,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                            <button onClick={handleAddFriendLink} className="w-full bg-white border border-gray-200 text-gray-900 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">添加</button>
                        </div>
 
+                       {/* 友情链接列表 */}
                        <div className="space-y-2">
                             {tempConfig.friendLinks?.map(link => (
                                 <div key={link.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-xl border border-gray-100">

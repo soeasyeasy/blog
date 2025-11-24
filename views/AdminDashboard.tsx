@@ -1,20 +1,29 @@
+/**
+ * 管理员仪表板视图组件
+ * 提供文章和随手记的管理功能，包括创建、编辑、删除等操作
+ */
 
 import React, { useState, useRef, useMemo, useEffect } from "react";
+// 导入图标组件
 import { Download, Upload, Plus, User, Edit3, Trash2, Search, Filter, X, PenLine, Star } from "lucide-react";
+// 导入类型定义
 import { Post, SiteConfig, Memo } from "../types";
+// 导入 API 工具
 import { api } from "../lib/api";
 
+// 管理员仪表板视图组件属性接口
 interface AdminDashboardProps {
-  posts: Post[];
-  config: SiteConfig;
-  onEdit: (p: Post) => void;
-  onCreate: () => void;
-  onDelete: (id: string) => void;
-  onExport: () => void;
-  onImport: (e: any) => void;
-  onSaveConfig: (c: SiteConfig) => void;
+  posts: Post[];                           // 文章数组
+  config: SiteConfig;                      // 站点配置
+  onEdit: (p: Post) => void;               // 编辑文章回调函数
+  onCreate: () => void;                    // 创建文章回调函数
+  onDelete: (id: string) => void;          // 删除文章回调函数
+  onExport: () => void;                    // 导出数据回调函数
+  onImport: (e: any) => void;              // 导入数据回调函数
+  onSaveConfig: (c: SiteConfig) => void;   // 保存配置回调函数
 }
 
+// 管理员仪表板视图组件
 export const AdminDashboard = ({ 
   posts, 
   onEdit, 
@@ -23,29 +32,34 @@ export const AdminDashboard = ({
   onExport, 
   onImport,
 }: AdminDashboardProps) => {
+  // 引用 DOM 元素
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 状态管理：活动标签页
   const [activeTab, setActiveTab] = useState<"posts" | "memos">("posts");
 
-  // Memos State
+  // 随手记状态管理
   const [memos, setMemos] = useState<Memo[]>([]);
   const [newMemoContent, setNewMemoContent] = useState("");
   const [newMemoImage, setNewMemoImage] = useState("");
   const [newMemoTags, setNewMemoTags] = useState("");
 
-  // Post Filter States
+  // 文章筛选状态管理
   const [adminSearch, setAdminSearch] = useState("");
   const [adminCategory, setAdminCategory] = useState("All");
 
+  // 当切换到随手记标签页时获取随手记数据
   useEffect(() => {
     if (activeTab === "memos") {
       api.getMemos().then(setMemos);
     }
   }, [activeTab]);
 
+  // 使用 useMemo 计算唯一分类，仅在文章数组变化时重新计算
   const uniqueCategories = useMemo(() => {
     return ["All", ...Array.from(new Set(posts.map(p => p.category || "Uncategorized")))];
   }, [posts]);
 
+  // 使用 useMemo 计算筛选后的文章，仅在相关依赖变化时重新计算
   const filteredPosts = useMemo(() => {
     return posts.filter(post => {
       const matchesSearch = 
@@ -56,6 +70,9 @@ export const AdminDashboard = ({
     });
   }, [posts, adminSearch, adminCategory]);
 
+  /**
+   * 处理添加随手记
+   */
   const handleAddMemo = async () => {
     if (!newMemoContent.trim()) return;
     const images = newMemoImage ? [newMemoImage] : undefined;
@@ -68,6 +85,10 @@ export const AdminDashboard = ({
     setNewMemoTags("");
   };
 
+  /**
+   * 处理删除随手记
+   * @param id 随手记 ID
+   */
   const handleDeleteMemo = async (id: string) => {
     if (window.confirm("Delete this memo?")) {
         const updated = await api.deleteMemo(id);
@@ -77,12 +98,14 @@ export const AdminDashboard = ({
 
   return (
     <div className="animate-fade-in pb-20">
+      {/* 仪表板头部 */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-6">
         <div>
           <h2 className="text-3xl font-bold text-[#1D1D1F]">控制台</h2>
           <p className="text-gray-500 mt-1">Content Management System</p>
         </div>
         
+        {/* 标签页切换 */}
         <div className="bg-white p-1 rounded-full border border-gray-200 shadow-sm flex overflow-x-auto max-w-full no-scrollbar">
           <button 
             onClick={() => setActiveTab("posts")}
@@ -99,10 +122,13 @@ export const AdminDashboard = ({
         </div>
       </div>
 
+      {/* 文章管理标签页 */}
       {activeTab === "posts" && (
         <div className="space-y-6 animate-slide-up">
+          {/* 操作栏 */}
           <div className="flex flex-col md:flex-row justify-between gap-4">
              <div className="flex items-center gap-3 flex-1">
+                {/* 搜索框 */}
                 <div className="relative flex-1 max-w-md">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input 
@@ -119,6 +145,7 @@ export const AdminDashboard = ({
                   )}
                 </div>
                 
+                {/* 分类筛选 */}
                 <div className="relative">
                    <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
                       <Filter className="w-3.5 h-3.5 text-gray-500" />
@@ -135,6 +162,7 @@ export const AdminDashboard = ({
                 </div>
              </div>
 
+             {/* 操作按钮 */}
              <div className="flex flex-wrap gap-3">
                 <button 
                   onClick={onExport}
@@ -168,6 +196,7 @@ export const AdminDashboard = ({
              </div>
           </div>
 
+          {/* 文章列表 */}
           <div className="bg-white rounded-3xl shadow-sm border border-gray-200/70 overflow-hidden">
             <div className="grid grid-cols-12 gap-4 px-8 py-4 border-b border-gray-100 bg-gray-50/80 text-xs font-bold text-gray-400 uppercase tracking-widest backdrop-blur-sm">
               <div className="col-span-5">文章标题</div>
@@ -227,8 +256,10 @@ export const AdminDashboard = ({
         </div>
       )}
       
+      {/* 随手记管理标签页 */}
       {activeTab === "memos" && (
         <div className="animate-slide-up max-w-2xl mx-auto space-y-8">
+            {/* 发布新随笔表单 */}
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-[#1D1D1F] mb-4 flex items-center gap-2">
                     <PenLine className="w-5 h-5" /> 发布新随笔
@@ -266,6 +297,7 @@ export const AdminDashboard = ({
                 </div>
             </div>
 
+            {/* 随手记列表 */}
             <div className="space-y-4">
                 {memos.map(memo => (
                     <div key={memo.id} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 flex gap-4">

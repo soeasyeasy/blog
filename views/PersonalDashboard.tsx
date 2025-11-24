@@ -1,26 +1,39 @@
+/**
+ * 个人仪表板视图组件
+ * 提供个人任务管理和日程安排功能，包括日历视图、待办事项和日程安排
+ */
 
 import React, { useState, useEffect, useMemo } from "react";
+// 导入图标组件
 import { CheckSquare, Square, Trash2, Plus, Calendar, Clock, LayoutDashboard, ChevronLeft, ChevronRight } from "lucide-react";
+// 导入类型定义
 import { Todo, Schedule, SiteConfig } from "../types";
+// 导入 API 工具
 import { api } from "../lib/api";
 
+// 个人仪表板视图组件属性接口
 interface PersonalDashboardProps {
-  config: SiteConfig;
+  config: SiteConfig;  // 站点配置
 }
 
+// 个人仪表板视图组件
 export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
+  // 状态管理：待办事项、日程安排和当前日期
   const [todos, setTodos] = useState<Todo[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  // 解构站点配置中的主题颜色
   const { themeColor = "#0071e3" } = config;
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDateStr, setSelectedDateStr] = useState(new Date().toISOString().split('T')[0]);
 
+  // 新待办事项和日程安排状态管理
   const [newTodo, setNewTodo] = useState("");
   const [newTodoPriority, setNewTodoPriority] = useState<'low'|'medium'|'high'>("medium");
   const [newScheduleTitle, setNewScheduleTitle] = useState("");
   const [newScheduleTime, setNewScheduleTime] = useState("");
 
+  // 组件挂载时获取待办事项和日程安排数据
   useEffect(() => {
     Promise.all([
         api.getTodos(),
@@ -31,23 +44,34 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
     });
   }, []);
 
+  // 使用 useMemo 计算当月天数，仅在当前日期变化时重新计算
   const daysInMonth = useMemo(() => {
     return new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
   }, [currentDate]);
 
+  // 使用 useMemo 计算当月第一天是星期几，仅在当前日期变化时重新计算
   const firstDayOfMonth = useMemo(() => {
     return new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
   }, [currentDate]);
 
+  /**
+   * 切换月份
+   * @param offset 月份偏移量
+   */
   const changeMonth = (offset: number) => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + offset);
     setCurrentDate(newDate);
   };
 
+  // 筛选选定日期的待办事项和日程安排
   const dayTodos = todos.filter(t => t.date === selectedDateStr);
   const daySchedules = schedules.filter(s => s.date === selectedDateStr).sort((a,b) => a.time.localeCompare(b.time));
 
+  /**
+   * 添加待办事项
+   * @param e 表单事件
+   */
   const addTodo = async (e: React.FormEvent) => {
       e.preventDefault();
       if(!newTodo.trim()) return;
@@ -56,6 +80,10 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
       setNewTodo("");
   };
 
+  /**
+   * 添加日程安排
+   * @param e 表单事件
+   */
   const addSchedule = async (e: React.FormEvent) => {
       e.preventDefault();
       if(!newScheduleTitle.trim() || !newScheduleTime.trim()) return;
@@ -65,10 +93,29 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
       setNewScheduleTime("");
   };
 
+  /**
+   * 删除待办事项
+   * @param id 待办事项 ID
+   */
   const deleteTodo = async (id: string) => setTodos(await api.deleteTodo(id));
+  
+  /**
+   * 切换待办事项完成状态
+   * @param id 待办事项 ID
+   */
   const toggleTodo = async (id: string) => setTodos(await api.toggleTodo(id));
+  
+  /**
+   * 删除日程安排
+   * @param id 日程安排 ID
+   */
   const deleteSchedule = async (id: string) => setSchedules(await api.deleteSchedule(id));
 
+  /**
+   * 渲染优先级标签
+   * @param p 优先级
+   * @returns JSX.Element
+   */
   const renderPriorityBadge = (p: 'low'|'medium'|'high') => {
       const colors = {
           low: 'bg-blue-100 text-blue-600',
@@ -82,6 +129,11 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
       );
   };
 
+  /**
+   * 检查指定日期是否有事件
+   * @param day 日期
+   * @returns boolean
+   */
   const hasEventOnDate = (day: number) => {
       const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
       return schedules.some(s => s.date === dateStr) || todos.some(t => t.date === dateStr && !t.completed);
@@ -89,10 +141,12 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
 
   return (
     <div className="animate-slide-up max-w-7xl mx-auto pt-6 pb-20 relative px-4">
+        {/* 背景装饰元素 */}
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
             <div className="absolute top-20 right-0 w-[600px] h-[600px] rounded-full opacity-[0.05] blur-[100px] animate-blob" style={{ backgroundColor: themeColor }} />
         </div>
 
+        {/* 页面头部 */}
         <div className="flex items-center gap-4 mb-8">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm backdrop-blur-sm bg-white">
                 <LayoutDashboard className="w-6 h-6" style={{ color: themeColor }} />
@@ -104,6 +158,7 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8 min-h-[700px]">
+            {/* 日历侧边栏 */}
             <div className="lg:w-1/3 bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 flex flex-col">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-bold text-[#1D1D1F]">
@@ -115,12 +170,14 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                     </div>
                 </div>
 
+                {/* 星期标题 */}
                 <div className="grid grid-cols-7 mb-4 text-center">
                     {['S','M','T','W','T','F','S'].map((d,i) => (
                         <div key={i} className="text-xs font-bold text-gray-400 py-2">{d}</div>
                     ))}
                 </div>
 
+                {/* 日期网格 */}
                 <div className="grid grid-cols-7 gap-y-2 flex-1 content-start">
                     {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`pad-${i}`} />)}
                     
@@ -148,7 +205,9 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                 </div>
             </div>
 
+            {/* 详细信息区域 */}
             <div className="lg:w-2/3 flex flex-col gap-6">
+                {/* 选定日期概览 */}
                 <div className="bg-white/60 backdrop-blur-xl p-6 rounded-[24px] border border-white/50 shadow-sm flex items-center justify-between">
                      <div>
                          <h3 className="text-xl font-bold text-[#1D1D1F] flex items-center gap-2">
@@ -163,16 +222,19 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+                    {/* 日程安排时间线 */}
                     <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 flex flex-col h-[500px]">
                         <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2"><Calendar className="w-4 h-4" /> Timeline</h4>
                         
                         <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                             {daySchedules.length === 0 ? (
+                                /* 无日程安排时的占位符 */
                                 <div className="h-full flex flex-col items-center justify-center text-gray-300">
                                     <Clock className="w-8 h-8 mb-2 opacity-20" />
                                     <p className="text-sm">No events planned</p>
                                 </div>
                             ) : (
+                                /* 日程安排列表 */
                                 daySchedules.map(item => (
                                     <div key={item.id} className="relative pl-6 pb-2 group">
                                         <div className="absolute left-0 top-0 bottom-0 w-px bg-gray-100 group-last:bottom-auto group-last:h-4" />
@@ -190,6 +252,7 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                             )}
                         </div>
 
+                        {/* 添加新日程安排表单 */}
                         <form onSubmit={addSchedule} className="mt-4 pt-4 border-t border-gray-100 flex gap-2">
                              <input type="time" value={newScheduleTime} onChange={e => setNewScheduleTime(e.target.value)} className="w-20 bg-gray-50 rounded-xl px-2 text-xs border-none" />
                              <input type="text" value={newScheduleTitle} onChange={e => setNewScheduleTitle(e.target.value)} placeholder="New Event..." className="flex-1 bg-gray-50 rounded-xl px-3 py-2 text-sm border-none focus:bg-white focus:ring-2 focus:ring-purple-100" />
@@ -197,16 +260,19 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                         </form>
                     </div>
 
+                    {/* 待办事项列表 */}
                     <div className="bg-white rounded-[32px] p-6 shadow-sm border border-gray-100 flex flex-col h-[500px]">
                          <h4 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2"><CheckSquare className="w-4 h-4" /> Tasks</h4>
                          
                          <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                             {dayTodos.length === 0 ? (
+                                /* 无待办事项时的占位符 */
                                 <div className="h-full flex flex-col items-center justify-center text-gray-300">
                                     <CheckSquare className="w-8 h-8 mb-2 opacity-20" />
                                     <p className="text-sm">No tasks for today</p>
                                 </div>
                             ) : (
+                                /* 待办事项列表 */
                                 dayTodos.map(todo => (
                                     <div key={todo.id} className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 group border border-transparent hover:border-gray-100 transition-all">
                                         <button onClick={() => toggleTodo(todo.id)} className={`shrink-0 ${todo.completed ? 'text-gray-300' : 'text-blue-500'}`}>
@@ -226,6 +292,7 @@ export const PersonalDashboard = ({ config }: PersonalDashboardProps) => {
                             )}
                          </div>
 
+                         {/* 添加新待办事项表单 */}
                          <form onSubmit={addTodo} className="mt-4 pt-4 border-t border-gray-100 space-y-2">
                              <div className="flex gap-2">
                                  <select 

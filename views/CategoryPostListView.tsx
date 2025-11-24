@@ -1,27 +1,38 @@
+/**
+ * 分类文章列表视图组件
+ * 展示按分类筛选的文章列表，支持搜索功能
+ */
 
 import React, { useState, useMemo } from "react";
+// 导入图标组件
 import { Search, ChevronRight, Folder, FileText, ChevronDown, Filter, X, Menu, SlidersHorizontal } from "lucide-react";
+// 导入类型定义
 import { Post, SiteConfig } from "../types";
+// 导入工具函数
 import { buildCategoryTree, CategoryNode, formatDate } from "../lib/utils";
 
+// 分类文章列表视图组件属性接口
 interface CategoryPostListViewProps {
-  posts: Post[];
-  config: SiteConfig;
-  selectedCategory: string;
-  onSelectCategory: (c: string) => void;
-  onRead: (id: string) => void;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  posts: Post[];                           // 文章数组
+  config: SiteConfig;                      // 站点配置
+  selectedCategory: string;                // 选中的分类
+  onSelectCategory: (c: string) => void;   // 选择分类回调函数
+  onRead: (id: string) => void;            // 阅读文章回调函数
+  searchQuery: string;                     // 搜索关键词
+  onSearchChange: (q: string) => void;     // 搜索关键词变化回调函数
 }
 
+// 分类项组件属性接口
 interface CategoryItemProps {
-  node: CategoryNode;
-  level?: number;
-  selectedCategory: string;
-  onSelect: (c: string) => void;
+  node: CategoryNode;                      // 分类节点
+  level?: number;                          // 层级（用于缩进）
+  selectedCategory: string;                // 选中的分类
+  onSelect: (c: string) => void;           // 选择分类回调函数
 }
 
+// 分类项组件
 const CategoryItem = ({ node, level = 0, selectedCategory, onSelect }: CategoryItemProps) => {
+    // 状态管理：是否选中和是否展开
     const isSelected = selectedCategory === node.fullPath || selectedCategory.startsWith(node.fullPath + '/');
     const [expanded, setExpanded] = useState(true);
     const hasChildren = node.children.length > 0;
@@ -65,6 +76,7 @@ const CategoryItem = ({ node, level = 0, selectedCategory, onSelect }: CategoryI
     );
 };
 
+// 分类文章列表视图组件
 export const CategoryPostListView = ({ 
     posts, 
     config, 
@@ -74,11 +86,14 @@ export const CategoryPostListView = ({
     searchQuery,
     onSearchChange
 }: CategoryPostListViewProps) => {
+  // 状态管理：可见文章数量和移动端菜单是否打开
   const [visibleCount, setVisibleCount] = useState(9);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  // 使用 useMemo 计算分类树，仅在文章数组变化时重新计算
   const categoryTree = useMemo(() => buildCategoryTree(["All", ...Array.from(new Set(posts.map(p => p.category)))]), [posts]);
   
+  // 使用 useMemo 计算筛选后的文章，仅在相关依赖变化时重新计算
   const filteredPosts = useMemo(() => {
     return posts.filter(post => {
       const matchesSearch = 
@@ -90,12 +105,13 @@ export const CategoryPostListView = ({
     });
   }, [posts, searchQuery, selectedCategory]);
 
+  // 计算要显示的文章
   const displayPosts = filteredPosts.slice(0, visibleCount);
 
   return (
     <div className="animate-fade-in pt-4 lg:pt-8 pb-20 max-w-7xl mx-auto min-h-screen px-4 sm:px-6">
        
-       {/* Mobile Category Filter Button */}
+       {/* 移动端分类筛选按钮 */}
        <div className="lg:hidden mb-6 flex items-center justify-between">
            <h1 className="text-2xl font-bold text-[#1D1D1F]">阅读</h1>
            <button 
@@ -107,7 +123,7 @@ export const CategoryPostListView = ({
            </button>
        </div>
 
-       {/* Mobile Filter Drawer (Expandable) */}
+       {/* 移动端筛选抽屉（可展开） */}
        {isMobileMenuOpen && (
            <div className="lg:hidden mb-8 bg-white rounded-3xl p-6 shadow-xl border border-gray-100 animate-slide-up z-20 relative">
                <div className="flex justify-between items-center mb-4">
@@ -130,7 +146,7 @@ export const CategoryPostListView = ({
 
        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
            
-           {/* Desktop Sidebar */}
+           {/* 桌面端侧边栏 */}
            <aside className="hidden lg:block w-64 shrink-0 lg:h-[calc(100vh-120px)] lg:sticky lg:top-24">
                <div className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 h-full overflow-y-auto no-scrollbar">
                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest px-3 mb-6">分类目录</h3>
@@ -144,7 +160,7 @@ export const CategoryPostListView = ({
                        <CategoryItem key={node.fullPath} node={node} selectedCategory={selectedCategory} onSelect={onSelectCategory} />
                    ))}
 
-                   {/* Stats Area */}
+                   {/* 统计信息区域 */}
                    <div className="mt-10 pt-6 border-t border-gray-100 px-3">
                        <div className="text-xs text-gray-400 font-bold uppercase mb-3">归档统计</div>
                        <div className="flex items-center justify-between text-sm bg-gray-50 p-3 rounded-xl border border-gray-100">
@@ -155,9 +171,9 @@ export const CategoryPostListView = ({
                </div>
            </aside>
 
-           {/* Main Content */}
+           {/* 主内容区域 */}
            <div className="flex-1 min-w-0">
-               {/* Search Header */}
+               {/* 搜索头部 */}
                <div className="mb-8 flex items-center gap-4 bg-white p-2.5 pl-4 rounded-[24px] shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
                     <div className="flex-1 relative">
                         <Search className="w-5 h-5 absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -184,7 +200,7 @@ export const CategoryPostListView = ({
                     )}
                </div>
 
-               {/* Grid */}
+               {/* 文章网格 */}
                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
                    {displayPosts.map(post => (
                        <div 
@@ -224,6 +240,7 @@ export const CategoryPostListView = ({
                    ))}
                </div>
 
+               {/* 无匹配文章时的提示 */}
                {displayPosts.length === 0 && (
                    <div className="text-center py-32 text-gray-400 bg-white rounded-[32px] border border-dashed border-gray-200 mt-4">
                        <Filter className="w-12 h-12 mx-auto mb-4 opacity-10" />
@@ -234,6 +251,7 @@ export const CategoryPostListView = ({
                    </div>
                )}
 
+               {/* 加载更多按钮 */}
                {filteredPosts.length > visibleCount && (
                    <div className="mt-12 text-center pb-8">
                        <button 

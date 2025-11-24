@@ -1,17 +1,30 @@
+/**
+ * 管理员登录视图组件
+ * 提供管理员登录界面，验证密码后进入管理后台
+ */
 
 import React, { useState } from "react";
+// 导入图标组件
 import { Settings } from "lucide-react";
 
+// 管理员登录视图组件属性接口
 export const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
+  // 状态管理：密码和错误状态
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
 
+  /**
+   * 处理表单提交
+   * @param e 表单事件
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // 简单密码验证（实际应用中应使用更安全的认证方式）
     if (password === "apple") {
       onLogin();
     } else {
       setError(true);
+      // 2秒后清除错误状态
       setTimeout(() => setError(false), 2000);
     }
   };
@@ -20,6 +33,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     <div className="flex items-center justify-center h-[70vh] animate-fade-in">
       <div className="w-full max-w-sm bg-white rounded-3xl shadow-2xl p-10 border border-gray-100">
         <div className="text-center mb-8">
+          {/* 图标和标题 */}
           <div className="w-16 h-16 bg-black text-white rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg">
             <Settings className="w-8 h-8" />
           </div>
@@ -27,6 +41,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
           <p className="text-gray-400 text-sm mt-2">请输入密码 (apple) 以继续管理。</p>
         </div>
         
+        {/* 登录表单 */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="relative">
             <input 

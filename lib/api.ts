@@ -1,16 +1,23 @@
+/**
+ * API 工具文件
+ * 提供与后端 API 交互的封装函数，以及本地存储的 fallback 实现
+ */
 
 import { Post, SiteConfig, Comment, Memo, Todo, Schedule } from "../types";
 import { generateId } from "./utils";
 
+// 本地存储键名常量
 const DB_KEY_POSTS = "blog_posts_data";
 const DB_KEY_CONFIG = "blog_site_config";
 const DB_KEY_MEMOS = "blog_memos_data";
 const DB_KEY_TODOS = "blog_todos_data";
 const DB_KEY_SCHEDULES = "blog_schedules_data";
+// 后端 API 基础 URL
 const BASE_URL = "http://localhost:8080/api";
 
-// --- Default Data for Fallback ---
+// --- 默认数据（用于 fallback） ---
 
+// 默认站点配置
 const DEFAULT_CONFIG: SiteConfig = {
   siteName: "BlogOS",
   heroTitle: "灵感，\n触手可及。",
@@ -85,6 +92,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   }
 };
 
+// 默认文章数据
 const DEFAULT_POSTS: Post[] = [
   {
     id: "1",
@@ -144,6 +152,7 @@ const DEFAULT_POSTS: Post[] = [
   }
 ];
 
+// 默认随手记数据
 const DEFAULT_MEMOS: Memo[] = [
   {
     id: "m1",
@@ -160,7 +169,14 @@ const DEFAULT_MEMOS: Memo[] = [
   }
 ];
 
-// --- Helper for fetching with fallback ---
+// --- 带 fallback 的获取助手函数 ---
+/**
+ * 通用的 fetch 函数，带有本地存储 fallback
+ * @param endpoint API 端点
+ * @param options fetch 选项
+ * @param fallbackFn fallback 函数
+ * @returns Promise<T>
+ */
 async function fetchWithFallback<T>(
     endpoint: string, 
     options: RequestInit | undefined, 
@@ -179,40 +195,49 @@ async function fetchWithFallback<T>(
     }
 }
 
-// --- Local Storage Implementation (Fallback) ---
+// --- 本地存储实现（Fallback） ---
 const localImpl = {
+    // 获取文章
     getPosts: () => {
         try {
             const saved = localStorage.getItem(DB_KEY_POSTS);
             return saved ? JSON.parse(saved) : DEFAULT_POSTS;
         } catch { return DEFAULT_POSTS; }
     },
+    // 保存文章
     savePosts: (posts: Post[]) => localStorage.setItem(DB_KEY_POSTS, JSON.stringify(posts)),
     
+    // 获取随手记
     getMemos: () => {
         try {
             const saved = localStorage.getItem(DB_KEY_MEMOS);
             return saved ? JSON.parse(saved) : DEFAULT_MEMOS;
         } catch { return DEFAULT_MEMOS; }
     },
+    // 保存随手记
     saveMemos: (memos: Memo[]) => localStorage.setItem(DB_KEY_MEMOS, JSON.stringify(memos)),
 
+    // 获取待办事项
     getTodos: () => {
         try {
             const saved = localStorage.getItem(DB_KEY_TODOS);
             return saved ? JSON.parse(saved) : [];
         } catch { return []; }
     },
+    // 保存待办事项
     saveTodos: (todos: Todo[]) => localStorage.setItem(DB_KEY_TODOS, JSON.stringify(todos)),
 
+    // 获取日程安排
     getSchedules: () => {
         try {
             const saved = localStorage.getItem(DB_KEY_SCHEDULES);
             return saved ? JSON.parse(saved) : [];
         } catch { return []; }
     },
+    // 保存日程安排
     saveSchedules: (schedules: Schedule[]) => localStorage.setItem(DB_KEY_SCHEDULES, JSON.stringify(schedules)),
 
+    // 获取配置
     getConfig: () => {
         try {
             const saved = localStorage.getItem(DB_KEY_CONFIG);
@@ -232,17 +257,27 @@ const localImpl = {
             };
         } catch { return DEFAULT_CONFIG; }
     },
+    // 保存配置
     saveConfig: (config: SiteConfig) => localStorage.setItem(DB_KEY_CONFIG, JSON.stringify(config))
 };
 
-// --- Exported Async API ---
+// --- 导出的异步 API ---
 
 export const api = {
-  // Posts
+  // 文章相关 API
+  /**
+   * 获取所有文章
+   * @returns Promise<Post[]>
+   */
   getPosts: async (): Promise<Post[]> => {
     return fetchWithFallback('/posts', undefined, localImpl.getPosts);
   },
   
+  /**
+   * 添加或更新文章
+   * @param post 文章对象
+   * @returns Promise<void>
+   */
   addOrUpdatePost: async (post: Post): Promise<void> => {
     return fetchWithFallback('/posts', {
         method: 'POST',
@@ -258,6 +293,11 @@ export const api = {
     });
   },
 
+  /**
+   * 删除文章
+   * @param id 文章 ID
+   * @returns Promise<void>
+   */
   deletePost: async (id: string): Promise<void> => {
     return fetchWithFallback(`/posts/${id}`, { method: 'DELETE' }, () => {
         const posts = localImpl.getPosts();
@@ -265,6 +305,11 @@ export const api = {
     });
   },
 
+  /**
+   * 点赞文章
+   * @param id 文章 ID
+   * @returns Promise<Post | null>
+   */
   likePost: async (id: string): Promise<Post | null> => {
       return fetchWithFallback(`/posts/${id}/like`, { method: 'POST' }, () => {
         const posts = localImpl.getPosts();
@@ -280,6 +325,13 @@ export const api = {
       });
   },
 
+  /**
+   * 添加评论
+   * @param postId 文章 ID
+   * @param comment 评论对象
+   * @param parentId 父评论 ID（可选）
+   * @returns Promise<Post | null>
+   */
   addComment: async (postId: string, comment: Omit<Comment, 'id' | 'date'>, parentId?: string): Promise<Post | null> => {
       return fetchWithFallback(`/posts/${postId}/comments?parentId=${parentId || ''}`, {
           method: 'POST',
@@ -328,11 +380,22 @@ export const api = {
       });
   },
 
-  // Memos
+  // 随手记相关 API
+  /**
+   * 获取所有随手记
+   * @returns Promise<Memo[]>
+   */
   getMemos: async (): Promise<Memo[]> => {
       return fetchWithFallback('/memos', undefined, localImpl.getMemos);
   },
   
+  /**
+   * 添加随手记
+   * @param content 随手记内容
+   * @param images 图片 URL 数组（可选）
+   * @param tags 标签数组（可选）
+   * @returns Promise<Memo[]>
+   */
   addMemo: async (content: string, images?: string[], tags?: string[]): Promise<Memo[]> => {
       const newMemo: Partial<Memo> = { content, images, tags, date: new Date().toISOString() };
       return fetchWithFallback('/memos', {
@@ -348,6 +411,11 @@ export const api = {
       });
   },
 
+  /**
+   * 删除随手记
+   * @param id 随手记 ID
+   * @returns Promise<Memo[]>
+   */
   deleteMemo: async (id: string): Promise<Memo[]> => {
       return fetchWithFallback(`/memos/${id}`, { method: 'DELETE' }, () => {
           const memos = localImpl.getMemos();
@@ -357,11 +425,22 @@ export const api = {
       });
   },
 
-  // Todos
+  // 待办事项相关 API
+  /**
+   * 获取所有待办事项
+   * @returns Promise<Todo[]>
+   */
   getTodos: async (): Promise<Todo[]> => {
       return fetchWithFallback('/todos', undefined, localImpl.getTodos);
   },
   
+  /**
+   * 添加待办事项
+   * @param text 待办事项内容
+   * @param priority 优先级
+   * @param date 日期
+   * @returns Promise<Todo[]>
+   */
   addTodo: async (text: string, priority: 'low'|'medium'|'high', date: string): Promise<Todo[]> => {
       const todo: Partial<Todo> = { text, priority, date, completed: false };
       return fetchWithFallback('/todos', {
@@ -377,6 +456,11 @@ export const api = {
       });
   },
 
+  /**
+   * 切换待办事项完成状态
+   * @param id 待办事项 ID
+   * @returns Promise<Todo[]>
+   */
   toggleTodo: async (id: string): Promise<Todo[]> => {
       return fetchWithFallback(`/todos/${id}/toggle`, { method: 'PUT' }, () => {
           const todos = localImpl.getTodos();
@@ -386,6 +470,11 @@ export const api = {
       });
   },
 
+  /**
+   * 删除待办事项
+   * @param id 待办事项 ID
+   * @returns Promise<Todo[]>
+   */
   deleteTodo: async (id: string): Promise<Todo[]> => {
       return fetchWithFallback(`/todos/${id}`, { method: 'DELETE' }, () => {
           const todos = localImpl.getTodos();
@@ -395,11 +484,23 @@ export const api = {
       });
   },
 
-  // Schedules
+  // 日程安排相关 API
+  /**
+   * 获取所有日程安排
+   * @returns Promise<Schedule[]>
+   */
   getSchedules: async (): Promise<Schedule[]> => {
       return fetchWithFallback('/schedules', undefined, localImpl.getSchedules);
   },
 
+  /**
+   * 添加日程安排
+   * @param title 日程标题
+   * @param time 时间
+   * @param date 日期
+   * @param description 描述（可选）
+   * @returns Promise<Schedule[]>
+   */
   addSchedule: async (title: string, time: string, date: string, description?: string): Promise<Schedule[]> => {
       const schedule: Partial<Schedule> = { title, time, date, description };
       return fetchWithFallback('/schedules', {
@@ -415,6 +516,11 @@ export const api = {
       });
   },
 
+  /**
+   * 删除日程安排
+   * @param id 日程安排 ID
+   * @returns Promise<Schedule[]>
+   */
   deleteSchedule: async (id: string): Promise<Schedule[]> => {
       return fetchWithFallback(`/schedules/${id}`, { method: 'DELETE' }, () => {
           const schedules = localImpl.getSchedules();
@@ -424,7 +530,11 @@ export const api = {
       });
   },
 
-  // Config
+  // 配置相关 API
+  /**
+   * 获取站点配置
+   * @returns Promise<SiteConfig>
+   */
   getConfig: async (): Promise<SiteConfig> => {
       return fetchWithFallback('/config', undefined, localImpl.getConfig).then(config => {
           // Backend might return raw JSON string if simplistic, but our fetchWithFallback assumes JSON parse.
@@ -449,6 +559,11 @@ export const api = {
       });
   },
 
+  /**
+   * 保存站点配置
+   * @param config 站点配置对象
+   * @returns Promise<void>
+   */
   saveConfig: async (config: SiteConfig): Promise<void> => {
       return fetchWithFallback('/config', {
           method: 'POST',
@@ -459,7 +574,11 @@ export const api = {
       });
   },
 
-  // Export/Import (Keep local logic mostly, or fetch all from backend)
+  // 数据导出/导入 API
+  /**
+   * 导出所有数据
+   * @returns Promise<string>
+   */
   exportData: async (): Promise<string> => {
       const posts = await api.getPosts();
       const memos = await api.getMemos();
@@ -475,6 +594,11 @@ export const api = {
       return JSON.stringify(data, null, 2);
   },
 
+  /**
+   * 导入数据
+   * @param jsonString JSON 字符串
+   * @returns Promise<boolean>
+   */
   importData: async (jsonString: string): Promise<boolean> => {
       try {
           const data = JSON.parse(jsonString);

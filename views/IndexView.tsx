@@ -1,48 +1,63 @@
+/**
+ * 首页视图组件
+ * BlogOS 应用的首页，展示网站概览、特色文章和最新文章
+ */
 
 import React, { useState, useEffect, useRef } from "react";
+// 导入图标组件
 import { Search, X, ChevronRight, Navigation, Sun, Cloud, Wind, CloudRain, CloudSnow, CloudLightning, RefreshCw, Sparkles, ArrowRight, ArrowUpRight, Clock, MapPin, Palette } from "lucide-react";
+// 导入类型定义
 import { Post, SiteConfig } from "../types";
+// 导入工具函数
 import { formatDate } from "../lib/utils";
 
+// 首页视图组件属性接口
 interface IndexViewProps {
-  posts: Post[];
-  onRead: (id: string) => void;
-  config: SiteConfig;
-  onUpdateTheme: (color: string) => void;
-  onSearch: (query: string) => void;
-  onViewAll: () => void;
-  isAuthenticated: boolean;
+  posts: Post[];                           // 文章数组
+  onRead: (id: string) => void;            // 阅读文章回调函数
+  config: SiteConfig;                      // 站点配置
+  onUpdateTheme: (color: string) => void;  // 更新主题回调函数
+  onSearch: (query: string) => void;       // 搜索回调函数
+  onViewAll: () => void;                   // 查看全部回调函数
+  isAuthenticated: boolean;                // 用户认证状态
 }
 
-// Reuse Widgets
+// 天气数据接口定义
 interface WeatherData {
   current: {
-      temperature: number;
-      weathercode: number;
+      temperature: number;      // 当前温度
+      weathercode: number;      // 天气代码
   };
   daily?: {
-      time: string[];
-      weathercode: number[];
-      temperature_2m_max: number[];
-      temperature_2m_min: number[];
+      time: string[];           // 日期数组
+      weathercode: number[];    // 天气代码数组
+      temperature_2m_max: number[];  // 最高温度数组
+      temperature_2m_min: number[];  // 最低温度数组
   };
 }
+
+// 位置数据接口定义
 interface LocationData {
-  city: string;
-  region: string;
-  country: string;
-  ip: string;
-  latitude: number;
-  longitude: number;
-}
-interface HitokotoData {
-  hitokoto: string;
-  from: string;
+  city: string;        // 城市
+  region: string;      // 地区
+  country: string;     // 国家
+  ip: string;          // IP 地址
+  latitude: number;    // 纬度
+  longitude: number;   // 经度
 }
 
+// 一言数据接口定义
+interface HitokotoData {
+  hitokoto: string;    // 一言内容
+  from: string;        // 来源
+}
+
+// 默认位置数据
 const FALLBACK_LOCATION: LocationData = {
   city: "Cupertino", region: "California", country: "USA", ip: "127.0.0.1", latitude: 37.3346, longitude: -122.0090
 };
+
+// 默认一言数据
 const FALLBACK_QUOTES: HitokotoData[] = [
   { hitokoto: "保持饥饿，保持愚蠢。", from: "Steve Jobs" },
   { hitokoto: "简单是终极的复杂。", from: "达·芬奇" },
@@ -50,6 +65,7 @@ const FALLBACK_QUOTES: HitokotoData[] = [
   { hitokoto: "设计不仅仅是外观，更是运作方式。", from: "Steve Jobs" },
 ];
 
+// 预设主题颜色
 const PRESET_THEMES = [
   { name: "Cosmic Blue", color: "#007AFF" }, 
   { name: "Royal Purple", color: "#5856D6" }, 
@@ -61,6 +77,7 @@ const PRESET_THEMES = [
   { name: "Emerald", color: "#34C759" }, 
 ];
 
+// 首页视图组件
 export const IndexView = ({ 
   posts, 
   onRead, 
@@ -70,27 +87,32 @@ export const IndexView = ({
   onViewAll,
   isAuthenticated
 }: IndexViewProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [location, setLocation] = useState<LocationData | null>(null);
-  const [quote, setQuote] = useState<HitokotoData | null>(null);
-  const [loadingQuote, setLoadingQuote] = useState(false);
-  const [quoteProgress, setQuoteProgress] = useState(0);
+  // 状态管理
+  const [searchQuery, setSearchQuery] = useState("");          // 搜索关键词
+  const [weather, setWeather] = useState<WeatherData | null>(null);  // 天气数据
+  const [location, setLocation] = useState<LocationData | null>(null);  // 位置数据
+  const [quote, setQuote] = useState<HitokotoData | null>(null);  // 一言数据
+  const [loadingQuote, setLoadingQuote] = useState(false);     // 一言加载状态
+  const [quoteProgress, setQuoteProgress] = useState(0);       // 一言进度条
   
-  // Manual Location & Weather Detail State
-  const [showLocationInput, setShowLocationInput] = useState(false);
-  const [showWeatherDetail, setShowWeatherDetail] = useState(false);
-  const [manualCity, setManualCity] = useState("");
-  const [isSearchingCity, setIsSearchingCity] = useState(false);
-  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
+  // 手动位置和天气详情状态
+  const [showLocationInput, setShowLocationInput] = useState(false);  // 是否显示位置输入框
+  const [showWeatherDetail, setShowWeatherDetail] = useState(false);  // 是否显示天气详情
+  const [manualCity, setManualCity] = useState("");            // 手动输入的城市
+  const [isSearchingCity, setIsSearchingCity] = useState(false);  // 城市搜索状态
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);  // 是否显示主题选择器
   
+  // 引用 DOM 元素
   const locationInputRef = useRef<HTMLDivElement>(null);
 
+  // 获取主题颜色
   const themeColor = config.themeColor || '#0071e3';
+  // 一言定时器引用
   const quoteTimerRef = useRef<number | null>(null);
+  // 进度条定时器引用
   const progressTimerRef = useRef<number | null>(null);
 
-  // --- Click Outside to Close Weather Input ---
+  // --- 点击外部关闭天气输入框 ---
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (locationInputRef.current && !locationInputRef.current.contains(event.target as Node)) {
@@ -107,7 +129,7 @@ export const IndexView = ({
     };
   }, [showLocationInput]);
 
-  // --- Data Fetching ---
+  // --- 数据获取 ---
   useEffect(() => {
     let isMounted = true;
     const initData = async () => {
@@ -132,7 +154,7 @@ export const IndexView = ({
     return () => { isMounted = false; };
   }, []);
 
-  // --- Quote Auto Refresh ---
+  // --- 一言自动刷新 ---
   useEffect(() => {
     const interval = 30000;
     const step = 100;
@@ -162,9 +184,14 @@ export const IndexView = ({
     };
   }, [quote]);
 
+  /**
+   * 获取天气数据
+   * @param lat 纬度
+   * @param lon 经度
+   */
   const fetchWeather = async (lat: number, lon: number) => {
     try {
-      // Fetch current and daily forecast
+      // 获取当前天气和每日预报
       const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto`);
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -182,6 +209,10 @@ export const IndexView = ({
     }
   };
 
+  /**
+   * 处理手动位置搜索
+   * @param e 表单事件
+   */
   const handleManualLocationSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualCity.trim()) return;
@@ -206,6 +237,9 @@ export const IndexView = ({
     }
   };
 
+  /**
+   * 获取一言数据
+   */
   const fetchQuote = async () => {
     setLoadingQuote(true);
     try {
@@ -222,6 +256,12 @@ export const IndexView = ({
     finally { setLoadingQuote(false); }
   };
 
+  /**
+   * 获取天气图标
+   * @param code 天气代码
+   * @param className CSS 类名
+   * @returns JSX.Element
+   */
   const getWeatherIcon = (code: number, className = "w-5 h-5") => {
     if (code === 0) return <Sun className={`${className} text-yellow-400`} />;
     if (code >= 1 && code <= 3) return <Cloud className={`${className} text-gray-400`} />;
@@ -232,31 +272,33 @@ export const IndexView = ({
     return <Sun className={`${className}`} />;
   };
 
-  // Find Featured Post (Priority: Featured Flag -> First Post)
+  // 查找特色文章（优先级：特色标志 -> 第一篇文章）
   const featuredPost = posts.find(p => p.featured) || posts[0];
-  // Latest posts excluding the featured one to avoid duplicate if possible, or just slice
+  // 最新文章（排除特色文章）
   const latestPosts = posts.filter(p => p.id !== featuredPost?.id).slice(0, 3);
 
   return (
     <div className="animate-fade-in space-y-12 pb-20 pt-4 px-0">
       
-      {/* --- Immersive Hero Banner --- */}
+      {/* --- 沉浸式横幅 --- */}
       {/* 
-          Refactored for Z-Index/Overflow fix: 
-          The outer container does NOT have overflow-hidden, allowing popups (like Weather) to spill out.
-          The background container DOES have rounded corners and overflow-hidden to clip the background.
+          重构以修复 Z-Index/溢出问题：
+          外层容器不使用 overflow-hidden，允许弹出框溢出。
+          背景容器使用圆角和 overflow-hidden 来裁剪背景。
       */}
       <div className="relative w-full min-h-[560px] flex flex-col items-center justify-center text-center group select-none shadow-xl shadow-gray-200/50 mx-auto max-w-[calc(100%-1rem)] sm:max-w-full rounded-[48px]">
            
-           {/* Background - Needs overflow hidden to clip the image/blobs */}
+           {/* 背景 - 需要 overflow-hidden 来裁剪图片/色块 */}
            <div className="absolute inset-0 z-0 rounded-[48px] overflow-hidden bg-white">
               {config.heroImage ? (
+                // 自定义背景图片
                 <div className="w-full h-full relative">
                     <img src={config.heroImage} className="w-full h-full object-cover opacity-90 animate-subtle-zoom" alt="Banner" />
                     <div className="absolute inset-0 bg-black/20" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 </div>
               ) : (
+                 // 默认背景色块
                  <div className="w-full h-full relative overflow-hidden bg-gray-50">
                     <div className="absolute inset-0 opacity-40" style={{ background: `radial-gradient(circle at 50% 50%, ${themeColor}, transparent 70%)` }} />
                     <div className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] rounded-full mix-blend-multiply filter blur-[80px] opacity-40 animate-blob" style={{ backgroundColor: themeColor }} />
@@ -266,10 +308,10 @@ export const IndexView = ({
               )}
            </div>
 
-           {/* Content - Z-index higher, no overflow hidden, so popups can float out */}
+           {/* 内容 - 更高的 Z-index，无 overflow-hidden，因此弹出框可以浮动 */}
            <div className="relative z-10 w-full max-w-3xl px-6 flex flex-col items-center gap-8">
                
-               {/* Site Branding */}
+               {/* 站点品牌信息 */}
                <div className="space-y-4 animate-slide-up">
                    <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-[#1D1D1F] drop-shadow-sm leading-tight">
                        {config.heroTitle}
@@ -279,7 +321,7 @@ export const IndexView = ({
                    </p>
                </div>
 
-               {/* Spotlight Search Bar */}
+               {/* 聚焦搜索栏 */}
                <div className="w-full max-w-xl relative group animate-slide-up" style={{ animationDelay: '0.1s' }}>
                     <div className="absolute inset-0 bg-white/40 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 transform group-focus-within:scale-[1.02] transition-all duration-300" />
                     <div className="relative flex items-center h-16 px-6">
@@ -303,10 +345,10 @@ export const IndexView = ({
                     </div>
                </div>
 
-               {/* Widgets Row */}
+               {/* 小部件行 */}
                <div className="flex flex-wrap items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
                    
-                   {/* Weather Pill */}
+                   {/* 天气小部件 */}
                    <div className="relative" ref={locationInputRef}>
                         {weather && (
                             <div 
@@ -320,7 +362,7 @@ export const IndexView = ({
                             </div>
                         )}
                         
-                        {/* Weather Detail & Location Input Popover */}
+                        {/* 天气详情和位置输入弹出框 */}
                         {(showWeatherDetail || showLocationInput) && weather && (
                             <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl p-6 z-50 w-80 animate-fade-in border border-gray-100">
                                 <div className="flex justify-between items-start mb-4">
@@ -337,6 +379,7 @@ export const IndexView = ({
                                     </div>
                                 </div>
                                 
+                                {/* 位置输入框 */}
                                 {showLocationInput && (
                                     <form onSubmit={handleManualLocationSearch} className="flex gap-2 mb-4">
                                         <input 
@@ -353,7 +396,7 @@ export const IndexView = ({
                                     </form>
                                 )}
 
-                                {/* 7-Day Forecast */}
+                                {/* 7日天气预报 */}
                                 {weather.daily && (
                                     <div className="space-y-3 pt-4 border-t border-gray-100">
                                         <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">7-Day Forecast</h4>
@@ -377,6 +420,7 @@ export const IndexView = ({
                                     </div>
                                 )}
                                 
+                                {/* 关闭按钮 */}
                                 <button 
                                     onClick={() => { setShowWeatherDetail(false); setShowLocationInput(false); }}
                                     className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full text-gray-400"
@@ -387,7 +431,7 @@ export const IndexView = ({
                         )}
                    </div>
 
-                   {/* Quote Pill */}
+                   {/* 一言小部件 */}
                    <div className="relative group/quote">
                        <div 
                          onClick={fetchQuote}
@@ -398,7 +442,7 @@ export const IndexView = ({
                            </span>
                            {loadingQuote && <RefreshCw className="w-3 h-3 animate-spin opacity-50 shrink-0" />}
                        </div>
-                       {/* Progress Bar for Auto Refresh */}
+                       {/* 自动刷新进度条 */}
                        <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-white/10 rounded-full overflow-hidden">
                            <div 
                                 className="h-full bg-white/40 transition-all duration-100 ease-linear" 
@@ -407,7 +451,7 @@ export const IndexView = ({
                        </div>
                    </div>
 
-                   {/* Public Theme Picker (Visible on Homepage) */}
+                   {/* 公共主题选择器（在首页可见） */}
                    <div className="relative">
                       <button 
                         onClick={() => setIsThemePickerOpen(!isThemePickerOpen)}
@@ -439,7 +483,7 @@ export const IndexView = ({
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        {/* --- Featured Section --- */}
+        {/* --- 特色文章部分 --- */}
         {featuredPost && (
             <section className="animate-slide-up mb-20" style={{ animationDelay: '0.3s' }}>
                 <div className="flex items-center gap-2 mb-6 px-1 opacity-60">
@@ -483,7 +527,7 @@ export const IndexView = ({
             </section>
         )}
 
-        {/* --- Latest Grid --- */}
+        {/* --- 最新文章网格 --- */}
         {latestPosts.length > 0 && (
             <section className="animate-slide-up" style={{ animationDelay: '0.4s' }}>
                 <div className="flex items-center justify-between mb-8 px-1">
@@ -527,7 +571,7 @@ export const IndexView = ({
         )}
       </div>
 
-      {/* --- Footer --- */}
+      {/* --- 页脚 --- */}
       <footer className="pt-24 pb-8 text-center border-t border-gray-200/50 mt-20">
          <div className="flex items-center justify-center gap-2 mb-4">
              <div className="w-8 h-8 rounded-xl bg-[#1D1D1F] flex items-center justify-center">

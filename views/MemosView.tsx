@@ -1,22 +1,36 @@
+/**
+ * 随手记视图组件
+ * 展示用户的随手记内容，按月份分组显示
+ */
 
 import React, { useEffect, useState } from "react";
+// 导入图标组件
 import { PenLine, Calendar } from "lucide-react";
+// 导入类型定义
 import { Memo, SiteConfig } from "../types";
+// 导入 API 工具
 import { api } from "../lib/api";
+// 导入子组件
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 
+// 随手记视图组件属性接口
 interface MemosViewProps {
-    config: SiteConfig;
+    config: SiteConfig;  // 站点配置
 }
 
+// 随手记视图组件
 export const MemosView = ({ config }: MemosViewProps) => {
+    // 状态管理：随手记数组
     const [memos, setMemos] = useState<Memo[]>([]);
+    // 解构站点配置中的主题颜色
     const { themeColor = "#0071e3" } = config;
 
+    // 组件挂载时获取随手记数据
     useEffect(() => {
         api.getMemos().then(setMemos);
     }, []);
 
+    // 将随手记按月份分组
     const groupedMemos = memos.reduce((groups, memo) => {
         const date = new Date(memo.date);
         const key = `${date.getFullYear()}年${date.getMonth() + 1}月`;
@@ -27,6 +41,7 @@ export const MemosView = ({ config }: MemosViewProps) => {
 
     return (
         <div className="animate-slide-up max-w-4xl mx-auto pt-10 pb-20 relative px-4">
+            {/* 背景装饰元素 */}
             <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
                 <div 
                     className="absolute top-20 right-0 w-[600px] h-[600px] rounded-full opacity-10 blur-[80px] mix-blend-multiply animate-blob"
@@ -38,6 +53,7 @@ export const MemosView = ({ config }: MemosViewProps) => {
                 />
             </div>
 
+            {/* 页面头部 */}
             <div className="flex items-center gap-4 mb-12">
                 <div 
                     className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm backdrop-blur-sm"
@@ -51,19 +67,23 @@ export const MemosView = ({ config }: MemosViewProps) => {
                 </div>
             </div>
 
+            {/* 时间线布局 */}
             <div className="relative border-l-2 border-gray-100/80 ml-4 sm:ml-8 space-y-12">
                 {Object.keys(groupedMemos).length > 0 ? (
                     Object.entries(groupedMemos).map(([dateLabel, groupMemos]) => (
                         <div key={dateLabel} className="pl-6 sm:pl-8 relative">
+                            {/* 时间线节点 */}
                             <div 
                                 className="absolute -left-[31px] sm:-left-[39px] top-0 bg-white border-4 w-5 h-5 rounded-full z-10" 
                                 style={{ borderColor: `${themeColor}40` }}
                             />
                             
+                            {/* 月份标题 */}
                             <h3 className="text-lg font-bold text-gray-400 mb-6 flex items-center gap-2">
                                 <Calendar className="w-4 h-4" /> {dateLabel}
                             </h3>
 
+                            {/* 随手记列表 */}
                             <div className="grid gap-6">
                                 {(groupMemos as Memo[]).map((memo) => {
                                     const memoDate = new Date(memo.date);
@@ -75,6 +95,7 @@ export const MemosView = ({ config }: MemosViewProps) => {
                                             className="bg-white/80 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 group"
                                             style={{ boxShadow: `0 4px 6px -1px rgba(0, 0, 0, 0.02)` }}
                                         >
+                                            {/* 日期和标签信息 */}
                                             <div className="flex items-start justify-between mb-4">
                                                  <div className="flex items-center gap-3">
                                                     <div className="flex flex-col items-center text-xs font-bold text-gray-400 bg-gray-50/80 px-2.5 py-1.5 rounded-xl border border-gray-100">
@@ -94,10 +115,12 @@ export const MemosView = ({ config }: MemosViewProps) => {
                                                  )}
                                             </div>
 
+                                            {/* 随手记内容 */}
                                             <div className="prose prose-stone prose-sm sm:prose-base max-w-none text-gray-700 leading-relaxed">
                                                 <MarkdownRenderer content={memo.content} />
                                             </div>
 
+                                            {/* 图片附件 */}
                                             {memo.images && memo.images.length > 0 && (
                                                 <div className={`mt-5 grid gap-2 ${memo.images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                                     {memo.images.map((img, i) => (
@@ -117,6 +140,7 @@ export const MemosView = ({ config }: MemosViewProps) => {
                         </div>
                     ))
                 ) : (
+                    /* 无随手记时的提示 */
                     <div className="pl-8 text-gray-400 italic">暂无记录，去控制台写一条吧。</div>
                 )}
             </div>
