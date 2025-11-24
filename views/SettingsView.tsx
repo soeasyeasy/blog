@@ -217,6 +217,9 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                 </div>
                                 <input type="text" value={tempConfig.profile.name} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, name: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Display Name" />
                                 <textarea rows={3} value={tempConfig.profile.bio} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, bio: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Bio" />
+                                <input type="text" value={tempConfig.profile.location || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, location: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Location" />
+                                <input type="email" value={tempConfig.profile.email || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, email: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Email" />
+                                <input type="url" value={tempConfig.profile.website || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, website: e.target.value}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="Website URL" />
                            </div>
 
                            {/* 工作信息 */}
@@ -239,8 +242,9 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                 <div className="grid gap-3">
                                     <input type="text" value={tempConfig.profile.github || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, github: e.target.value}})} className="rounded-xl border-gray-200 text-sm" placeholder="GitHub Username" />
                                     <input type="text" value={tempConfig.profile.twitter || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, twitter: e.target.value}})} className="rounded-xl border-gray-200 text-sm" placeholder="Twitter Username" />
-                                    <input type="text" value={tempConfig.profile.socials?.linkedin || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, linkedin: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="LinkedIn URL" />
-                                    <input type="text" value={tempConfig.profile.socials?.instagram || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, instagram: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="Instagram URL" />
+                                    <input type="url" value={tempConfig.profile.socials?.linkedin || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, linkedin: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="LinkedIn URL" />
+                                    <input type="url" value={tempConfig.profile.socials?.instagram || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, instagram: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="Instagram URL" />
+                                    <input type="url" value={tempConfig.profile.socials?.youtube || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, youtube: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="YouTube URL" />
                                 </div>
                            </div>
 
