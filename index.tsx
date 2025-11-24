@@ -37,8 +37,8 @@ const App = () => {
   const [config, setConfig] = useState<SiteConfig | null>(null);
   // 状态管理：当前激活的文章 ID
   const [activePostId, setActivePostId] = useState<string | null>(null);
-  // 状态管理：用户认证状态
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // 状态管理：JWT token
+  const [authToken, setAuthToken] = useState<string | null>(null);
   // 状态管理：正在编辑的文章
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   
@@ -46,6 +46,37 @@ const App = () => {
   const [selectedCategory, setSelectedCategory] = useState("All");
   // 导航状态管理：全局搜索关键词
   const [globalSearch, setGlobalSearch] = useState("");
+
+  // 检查 token 是否有效
+  const isTokenValid = (token: string | null): boolean => {
+    if (!token) return false;
+    try {
+      const payload = JSON.parse(atob(token)); // 解析 base64 编码的 payload
+      return payload.exp > Date.now();
+    } catch {
+      return false;
+    }
+  };
+
+  // 计算认证状态
+  const isAuthenticated = useMemo(() => isTokenValid(authToken), [authToken]);
+
+  // 在应用启动时检查本地存储中的 token
+  useEffect(() => {
+    const savedToken = localStorage.getItem('auth_token');
+    if (isTokenValid(savedToken)) {
+      setAuthToken(savedToken);
+    }
+  }, []);
+
+  // 当 token 改变时，保存到本地存储
+  useEffect(() => {
+    if (authToken) {
+      localStorage.setItem('auth_token', authToken);
+    } else {
+      localStorage.removeItem('auth_token');
+    }
+  }, [authToken]);
 
   // 初始数据加载：获取文章和配置信息
   useEffect(() => {
@@ -153,7 +184,7 @@ const App = () => {
 
   // 用户登出处理函数
   const handleLogout = () => {
-      setIsAuthenticated(false);
+      setAuthToken(null);
       navigateTo("home");
   };
 
@@ -228,8 +259,8 @@ const App = () => {
 
         {/* 管理员登录视图 */}
         {view === "admin-login" && (
-          <AdminLogin onLogin={() => {
-            setIsAuthenticated(true);
+          <AdminLogin onLogin={(token) => {
+            setAuthToken(token);
             navigateTo("admin-dashboard");
           }} />
         )}

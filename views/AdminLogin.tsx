@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import { Settings } from "lucide-react";
 
 // 管理员登录视图组件属性接口
-export const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
+export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) => {
   // 状态管理：密码和错误状态
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
@@ -21,7 +21,12 @@ export const AdminLogin = ({ onLogin }: { onLogin: () => void }) => {
     e.preventDefault();
     // 简单密码验证（实际应用中应使用更安全的认证方式）
     if (password === "apple") {
-      onLogin();
+      // 生成一个简单的 JWT token（实际应用中应由服务器生成）
+      const token = btoa(JSON.stringify({
+        sub: "admin",
+        exp: Date.now() + 24 * 60 * 60 * 1000 // 24小时过期
+      }));
+      onLogin(token);
     } else {
       setError(true);
       // 2秒后清除错误状态
