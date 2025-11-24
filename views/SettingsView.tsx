@@ -96,7 +96,6 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
            {/* 主内容区域 */}
            <div className="flex-1 bg-white rounded-[32px] shadow-sm border border-gray-200 p-8 sm:p-10 min-h-[600px] relative">
                
-
                {/* 保存按钮（浮动） */}
                <div className="absolute top-8 right-8 z-10">
                    <button 
@@ -241,13 +240,26 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                     <input type="text" value={tempConfig.profile.github || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, github: e.target.value}})} className="rounded-xl border-gray-200 text-sm" placeholder="GitHub Username" />
                                     <input type="text" value={tempConfig.profile.twitter || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, twitter: e.target.value}})} className="rounded-xl border-gray-200 text-sm" placeholder="Twitter Username" />
                                     <input type="text" value={tempConfig.profile.socials?.linkedin || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, linkedin: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="LinkedIn URL" />
+                                    <input type="text" value={tempConfig.profile.socials?.instagram || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, socials: {...tempConfig.profile.socials, instagram: e.target.value}}})} className="rounded-xl border-gray-200 text-sm" placeholder="Instagram URL" />
                                 </div>
                            </div>
 
-                           {/* 技能栈 */}
+                           {/* 技能栈 - 改为文本域 */}
                            <div className="space-y-4">
                                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">技能栈</label>
-                                <input type="text" value={tempConfig.profile.skills?.join(", ") || ''} onChange={e => setTempConfig({...tempConfig, profile: {...tempConfig.profile, skills: e.target.value.split(/[,，]/).map(s=>s.trim())}})} className="w-full rounded-xl border-gray-200 text-sm" placeholder="React, Node.js..." />
+                                <textarea 
+                                  rows={4}
+                                  value={tempConfig.profile.skills?.join("\n") || ''} 
+                                  onChange={e => setTempConfig({
+                                    ...tempConfig, 
+                                    profile: {
+                                      ...tempConfig.profile, 
+                                      skills: e.target.value.split("\n").map(s => s.trim()).filter(s => s.length > 0)
+                                    }
+                                  })} 
+                                  className="w-full rounded-xl border-gray-200 text-sm font-mono" 
+                                  placeholder="每行一个技能，支持 Markdown 语法&#10;例如：&#10;React&#10;Node.js&#10;TypeScript"
+                                />
                            </div>
                        </div>
                        
@@ -322,7 +334,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                                     <button onClick={() => handleDeleteFriendLink(link.id)} className="text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                                 </div>
                             ))}
-                       </div>
+                        </div>
                    </div>
                )}
 
