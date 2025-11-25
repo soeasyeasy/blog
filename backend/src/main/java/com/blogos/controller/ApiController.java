@@ -7,13 +7,17 @@ package com.blogos.controller;
 import com.blogos.model.*;
 import com.blogos.repository.*;
 import com.blogos.service.PostService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 // REST 控制器注解，标记这是一个 RESTful Web 服务控制器
 @RestController
@@ -42,6 +46,10 @@ public class ApiController {
     // 自动注入日程安排仓库
     @Autowired
     private ScheduleRepository scheduleRepo;
+    
+    // 自动注入用户仓库
+    @Autowired
+    private UserRepository userRepo;
 
     // --- 文章相关接口 ---
     
@@ -241,5 +249,52 @@ public class ApiController {
     public List<Schedule> deleteSchedule(@PathVariable String id) {
         scheduleRepo.deleteById(id);
         return scheduleRepo.findAll();
+    }
+    
+    // --- 用户认证相关接口 ---
+    
+    /**
+     * 用户登录
+     * @param credentials 用户凭证
+     * @return 认证令牌
+     */
+    @PostMapping("/login")
+    public Map<String, Object> login(@RequestBody Map<String, String> credentials) {
+        String username = credentials.get("username");
+        String password = credentials.get("password");
+        
+        // 简单的密码哈希处理
+        String hashedPassword = hashPassword(password);
+        
+        Optional<User> userOpt = userRepo.findByUsername(username);
+        if (userOpt.isPresent() && userOpt.get().getPasswordHash().equals(hashedPassword)) {
+            // 生成一个简单的 JWT token（实际应用中应使用更安全的 JWT 库）
+            String token = Base64.getEncoder().encodeToString(
+                ("{\"sub\":\"" + username + "\",\"exp\":" + (System.currentTimeMillis() + 24 * 60 * 60 * 1000) + "}").getBytes()
+            );
+            
+            return Map.of("success", true, "token", token);
+        } else {
+            return Map.of("success", false, "message", "Invalid credentials");
+        }
+    }
+    
+    /**
+     * 简单的密码哈希方法
+     * @param password 明文密码
+     * @return 哈希后的密码
+     */
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = md.digest(password.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error hashing password", e);
+        }
     }
 }

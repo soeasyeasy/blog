@@ -9,28 +9,44 @@ import { Settings } from "lucide-react";
 
 // 管理员登录视图组件属性接口
 export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) => {
-  // 状态管理：密码和错误状态
+  // 状态管理：用户名、密码和错误状态
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   /**
    * 处理表单提交
    * @param e 表单事件
    */
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 简单密码验证（实际应用中应使用更安全的认证方式）
-    if (password === "apple") {
-      // 生成一个简单的 JWT token（实际应用中应由服务器生成）
-      const token = btoa(JSON.stringify({
-        sub: "admin",
-        exp: Date.now() + 24 * 60 * 60 * 1000 // 24小时过期
-      }));
-      onLogin(token);
-    } else {
+    setLoading(true);
+    setError(false);
+    
+    try {
+      // 调用后端登录接口
+      const response = await fetch("http://localhost:8080/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        onLogin(data.token);
+      } else {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      }
+    } catch (err) {
       setError(true);
-      // 2秒后清除错误状态
       setTimeout(() => setError(false), 2000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -43,11 +59,21 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
             <Settings className="w-8 h-8" />
           </div>
           <h2 className="text-2xl font-bold text-[#1D1D1F]">Admin Access</h2>
-          <p className="text-gray-400 text-sm mt-2">请输入密码 (apple) 以继续管理。</p>
+          <p className="text-gray-400 text-sm mt-2">请输入用户名和密码以继续管理。</p>
         </div>
         
         {/* 登录表单 */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Username" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className={`w-full bg-gray-50 border ${error ? "border-red-500 bg-red-50" : "border-transparent hover:bg-gray-100"} rounded-xl px-4 py-4 text-center text-[#1D1D1F] font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071e3]/20 transition-all duration-300 placeholder-gray-400`}
+              disabled={loading}
+            />
+          </div>
           <div className="relative">
             <input 
               type="password" 
@@ -55,13 +81,15 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className={`w-full bg-gray-50 border ${error ? "border-red-500 bg-red-50" : "border-transparent hover:bg-gray-100"} rounded-xl px-4 py-4 text-center text-[#1D1D1F] font-medium focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#0071e3]/20 transition-all duration-300 placeholder-gray-400`}
+              disabled={loading}
             />
           </div>
           <button 
             type="submit"
-            className="w-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-[#0071e3]/30 transition-all duration-300 active:scale-[0.98]"
+            disabled={loading}
+            className={`w-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-semibold py-4 rounded-xl shadow-lg hover:shadow-[#0071e3]/30 transition-all duration-300 active:scale-[0.98] ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
-            Sign In
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
       </div>
