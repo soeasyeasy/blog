@@ -9,7 +9,7 @@ export const generateId = () => Math.random().toString(36).substring(2, 9);
 // 格式化日期
 export const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
+    return date.toLocaleTimeString('zh-CN', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'

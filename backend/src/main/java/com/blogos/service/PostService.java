@@ -7,10 +7,14 @@ package com.blogos.service;
 import com.blogos.model.Comment;
 import com.blogos.model.Post;
 import com.blogos.repository.PostRepository;
+import org.hibernate.type.descriptor.DateTimeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,6 +29,7 @@ public class PostService {
 
     /**
      * 保存文章
+     *
      * @param post 文章对象
      * @return 保存后的文章
      */
@@ -46,15 +51,17 @@ public class PostService {
 
     /**
      * 获取所有文章
+     *
      * @return 文章列表
      */
     public List<Post> getAllPosts() {
         // 按日期降序排序（简单逻辑）
         return postRepository.findAll();
     }
-    
+
     /**
      * 删除文章
+     *
      * @param id 文章 ID
      */
     public void deletePost(String id) {
@@ -63,8 +70,9 @@ public class PostService {
 
     /**
      * 添加评论
-     * @param postId 文章 ID
-     * @param comment 评论对象
+     *
+     * @param postId   文章 ID
+     * @param comment  评论对象
      * @param parentId 父评论 ID
      * @return 添加评论后的文章
      */
@@ -75,8 +83,8 @@ public class PostService {
             Post post = postOpt.get();
             // 如果评论 ID 为空，则生成新的 UUID
             if (comment.getId() == null) comment.setId(UUID.randomUUID().toString());
-            
-            if (parentId == null) {
+            comment.setDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern(DateTimeUtils.FORMAT_STRING_TIMESTAMP)));
+            if (!StringUtils.hasText(parentId)) {
                 // 如果没有父评论 ID，则直接添加到文章的评论列表
                 post.getComments().add(comment);
             } else {
@@ -90,6 +98,7 @@ public class PostService {
 
     /**
      * 递归添加回复评论
+     *
      * @param comments 评论列表
      * @param newReply 新回复评论
      * @param parentId 父评论 ID
@@ -110,6 +119,7 @@ public class PostService {
 
     /**
      * 文章点赞
+     *
      * @param id 文章 ID
      * @return 点赞后的文章
      */
