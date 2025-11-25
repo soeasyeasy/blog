@@ -14,6 +14,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
   /**
@@ -24,6 +25,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
     e.preventDefault();
     setLoading(true);
     setError(false);
+    setErrorMessage("");
     
     try {
       // 对密码进行哈希处理
@@ -40,13 +42,20 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
       
       const data = await response.json();
       
-      if (data.success) {
+      if (response.status === 429) {
+        // 处理限流错误
+        setErrorMessage("请求过于频繁，请稍后再试");
+        setError(true);
+        setTimeout(() => setError(false), 3000);
+      } else if (data.success) {
         onLogin(data.token);
       } else {
+        setErrorMessage(data.message || "登录失败");
         setError(true);
         setTimeout(() => setError(false), 2000);
       }
-    } catch (err) {
+    } catch (err: any) {
+      setErrorMessage("网络错误，请稍后重试");
       setError(true);
       setTimeout(() => setError(false), 2000);
     } finally {
@@ -88,6 +97,14 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
               disabled={loading}
             />
           </div>
+          
+          {/* 错误消息显示 */}
+          {error && (
+            <div className="text-red-500 text-center text-sm py-2">
+              {errorMessage || "登录失败，请检查用户名和密码"}
+            </div>
+          )}
+          
           <button 
             type="submit"
             disabled={loading}

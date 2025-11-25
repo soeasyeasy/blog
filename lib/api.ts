@@ -187,6 +187,9 @@ async function fetchWithFallback<T>(
         if (res.ok) {
              const data = await res.json();
              return data;
+        } else if (res.status === 429) {
+            // 处理限流错误
+            throw new Error("请求过于频繁，请稍后再试");
         }
         throw new Error(`API Error: ${res.status}`);
     } catch (e) {
