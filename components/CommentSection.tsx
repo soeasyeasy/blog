@@ -10,6 +10,7 @@ import { Send, CornerDownRight, MessageCircle } from "lucide-react";
 import { Comment } from "../types";
 // 导入工具函数
 import { formatDate } from "../lib/utils";
+import { sanitizeHtml } from "../lib/validation";
 
 // 评论区组件属性接口
 interface CommentSectionProps {
@@ -38,10 +39,15 @@ const CommentItem = ({
   // 处理回复表单提交
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyContent.trim()) return;
-    onSubmitReply(replyContent, replyAuthor || "Guest", comment.id);
-    setReplyContent("");
-    onCancelReply();
+    // 清理输入
+    const cleanContent = sanitizeHtml(replyContent);
+    const cleanAuthor = sanitizeHtml(replyAuthor) || "匿名用户";
+    
+    if (cleanContent.trim()) {
+      onSubmitReply(cleanContent, cleanAuthor, comment.id);
+      setReplyContent("");
+      setReplyAuthor("");
+    }
   };
 
   return (
@@ -130,12 +136,18 @@ export const CommentSection = ({ comments, onAddComment }: CommentSectionProps) 
   const [authorName, setAuthorName] = useState("");
   const [replyingToId, setReplyingToId] = useState<string | null>(null);
 
-  // 处理主评论表单提交
+  // 处理评论表单提交
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
-    onAddComment(newComment, authorName || "Guest");
-    setNewComment("");
+    // 清理输入
+    const cleanContent = sanitizeHtml(newComment);
+    const cleanAuthor = sanitizeHtml(authorName) || "匿名用户";
+    
+    if (cleanContent.trim()) {
+      onAddComment(cleanContent, cleanAuthor);
+      setNewComment("");
+      setAuthorName("");
+    }
   };
 
   // 处理回复提交

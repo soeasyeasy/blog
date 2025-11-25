@@ -7,6 +7,7 @@ import React, { useState } from "react";
 // 导入图标组件
 import { Settings } from "lucide-react";
 import { sha256 } from "../lib/utils";
+import { validateUsername, validatePassword } from "../lib/validation";
 
 // 管理员登录视图组件属性接口
 export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) => {
@@ -27,6 +28,23 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
     setError(false);
     setErrorMessage("");
     
+    // 前端输入验证
+    if (!validateUsername(username)) {
+      setErrorMessage("用户名格式不正确（3-20位字母、数字或下划线）");
+      setError(true);
+      setLoading(false);
+      setTimeout(() => setError(false), 3000);
+      return;
+    }
+    
+    if (!validatePassword(password)) {
+      setErrorMessage("密码强度不足（至少8位，包含字母和数字）");
+      setError(true);
+      setLoading(false);
+      setTimeout(() => setError(false), 3000);
+      return;
+    }
+    
     try {
       // 对密码进行哈希处理
       const hashedPassword = await sha256(password);
@@ -37,7 +55,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password: hashedPassword }),
+        body: JSON.stringify({ username: username.trim(), password: hashedPassword }),
       });
       
       const data = await response.json();

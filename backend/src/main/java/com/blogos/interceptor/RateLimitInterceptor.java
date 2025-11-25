@@ -70,6 +70,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 response.getWriter().write("{\"error\":\"Rate limit exceeded. Please try again later.\"}");
                 return false;
             }
+            
+            // 记录正常请求
+            if (currentCount == 1) {
+                logger.info("First request from IP: {} for URI: {}", ip, uri);
+            }
         }
         
         return true;
@@ -161,6 +166,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (info != null) {
             synchronized (info) {
                 info.requestCount.set(0);
+                logger.info("Rate limit count reset for IP: {}", ip);
             }
         }
     }
@@ -169,7 +175,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
      * 清除所有限流记录
      */
     public void clearAllRecords() {
+        int count = requestInfoMap.size();
         requestInfoMap.clear();
+        logger.info("All rate limit records cleared. {} IPs were tracked.", count);
     }
     
     /**
