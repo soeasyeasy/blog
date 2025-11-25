@@ -5,9 +5,16 @@
 
 import React, { useState } from "react";
 // 导入图标组件
-import { Save, Check, Trash2, Mail, Globe, MapPin, Briefcase, Building, Github, Twitter, Linkedin, Instagram, Sliders, Palette, Search as SearchIcon, Shield, UserCircle, Layout } from "lucide-react";
+import { Save, Check, Trash2, Mail, Globe, MapPin, Briefcase, Building, Github, Twitter, Linkedin, Instagram, Sliders, Palette, Search as SearchIcon, Shield, UserCircle, Layout, Key } from "lucide-react";
 // 导入类型定义
 import { SiteConfig, FriendLink, PRESET_THEMES } from "../types";
+import { sha256 } from "../lib/utils";
+
+// 定义账户类型
+interface Account {
+  username: string;
+  password: string;
+}
 
 // 设置视图组件属性接口
 interface SettingsViewProps {
@@ -18,16 +25,33 @@ interface SettingsViewProps {
 // 设置视图组件
 export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
   // 状态管理：活动标签页和临时配置
-  const [activeTab, setActiveTab] = useState<"general" | "theme" | "profile" | "seo" | "friends">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "theme" | "profile" | "seo" | "friends" | "accounts">("general");
   const [tempConfig, setTempConfig] = useState<SiteConfig>(config);
   // 新友情链接状态管理
   const [newFriendLink, setNewFriendLink] = useState<Partial<FriendLink>>({});
+  // 账户管理状态
+  const [accounts, setAccounts] = useState<Account[]>(() => {
+    // 从配置中提取账户信息
+    const configStr = JSON.stringify(config);
+    try {
+      const parsed = JSON.parse(configStr);
+      return parsed.accounts || [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [newAccount, setNewAccount] = useState<{username: string, password: string}>({username: '', password: ''});
 
   /**
    * 处理保存配置
    */
-  const handleSave = () => {
-    onSaveConfig(tempConfig);
+  const handleSave = async () => {
+    // 在保存前将账户信息添加到配置中
+    const configToSave = {
+      ...tempConfig,
+      accounts: accounts
+    };
+    onSaveConfig(configToSave);
     alert("设置已保存");
   };
 
@@ -66,6 +90,42 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
       });
   };
 
+  /**
+   * 处理添加账户
+   */
+  const handleAddAccount = async () => {
+    if (newAccount.username && newAccount.password) {
+      // 检查用户名是否已存在
+      if (accounts.some(acc => acc.username === newAccount.username)) {
+        alert("用户名已存在");
+        return;
+      }
+      
+      // 对密码进行哈希处理
+      const hashedPassword = await sha256(newAccount.password);
+      
+      // 添加新账户
+      const updatedAccounts = [
+        ...accounts,
+        {
+          username: newAccount.username,
+          password: hashedPassword
+        }
+      ];
+      setAccounts(updatedAccounts);
+      setNewAccount({username: '', password: ''});
+    }
+  };
+
+  /**
+   * 处理删除账户
+   * @param username 用户名
+   */
+  const handleDeleteAccount = (username: string) => {
+    const updatedAccounts = accounts.filter(acc => acc.username !== username);
+    setAccounts(updatedAccounts);
+  };
+
   // 侧边栏项组件
   const SidebarItem = ({ id, label, icon: Icon }: { id: typeof activeTab, label: string, icon: any }) => (
     <button
@@ -91,6 +151,7 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                <SidebarItem id="profile" label="个人资料" icon={UserCircle} />
                <SidebarItem id="seo" label="SEO 优化" icon={SearchIcon} />
                <SidebarItem id="friends" label="资源导航" icon={Layout} />
+               <SidebarItem id="accounts" label="账户管理" icon={Shield} />
            </div>
 
            {/* 主内容区域 */}
@@ -302,6 +363,82 @@ export const SettingsView = ({ config, onSaveConfig }: SettingsViewProps) => {
                    </div>
                )}
 
+               {/* --- 账户管理标签页 --- */}
+               {activeTab === "accounts" && (
+                   <div className="space-y-8 max-w-2xl animate-fade-in">
+                       <div>
+                           <h3 className="text-xl font-bold text-gray-900 mb-1">账户管理</h3>
+                           <p className="text-sm text-gray-500">管理系统登录账户。</p>
+                       </div>
+                       
+                       {/* 添加新账户表单 */}
+                       <div className="bg-gray-50 rounded-2xl p-6 space-y-4">
+                           <h4 className="font-semibold text-gray-800">添加新账户</h4>
+                           <div className="grid grid-cols-2 gap-4">
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-700 mb-2">用户名</label>
+                                   <input 
+                                     type="text" 
+                                     value={newAccount.username} 
+                                     onChange={e => setNewAccount({...newAccount, username: e.target.value})}
+                                     className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" 
+                                     placeholder="输入用户名"
+                                   />
+                               </div>
+                               <div>
+                                   <label className="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                                   <input 
+                                     type="password" 
+                                     value={newAccount.password} 
+                                     onChange={e => setNewAccount({...newAccount, password: e.target.value})}
+                                     className="w-full rounded-xl border-gray-200 focus:ring-black focus:border-black py-3" 
+                                     placeholder="输入密码"
+                                   />
+                               </div>
+                           </div>
+                           <button 
+                             onClick={handleAddAccount}
+                             className="w-full bg-black text-white py-3 rounded-xl font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                           >
+                               <Key className="w-4 h-4" /> 添加账户
+                           </button>
+                       </div>
+                       
+                       {/* 账户列表 */}
+                       <div className="space-y-4">
+                           <h4 className="font-semibold text-gray-800">现有账户</h4>
+                           {accounts.length === 0 ? (
+                               <div className="text-center py-8 text-gray-500">
+                                   <Shield className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                                   <p>暂无账户</p>
+                               </div>
+                           ) : (
+                               <div className="space-y-3">
+                                   {accounts.map((account, index) => (
+                                       <div key={index} className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+                                           <div className="flex items-center gap-3">
+                                               <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center">
+                                                   <UserCircle className="w-5 h-5" />
+                                               </div>
+                                               <div>
+                                                   <div className="font-medium text-gray-900">{account.username}</div>
+                                                   <div className="text-sm text-gray-500">管理员账户</div>
+                                               </div>
+                                           </div>
+                                           <button 
+                                             onClick={() => handleDeleteAccount(account.username)}
+                                             className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                           >
+                                               <Trash2 className="w-4 h-4" />
+                                           </button>
+                                       </div>
+                                   ))}
+                               </div>
+                           )}
+                       </div>
+                   </div>
+               )}
+               
                {/* --- 友情链接标签页 --- */}
                {activeTab === "friends" && (
                    <div className="space-y-8 animate-fade-in">

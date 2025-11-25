@@ -1,8 +1,9 @@
 package com.blogos.model;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "users")
@@ -13,7 +14,8 @@ public class User {
     private String passwordHash;
 
     // Constructors
-    public User() {}
+    public User() {
+    }
 
     public User(String id, String username, String passwordHash) {
         this.id = id;

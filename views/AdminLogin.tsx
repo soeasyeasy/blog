@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 // 导入图标组件
 import { Settings } from "lucide-react";
+import { sha256 } from "../lib/utils";
 
 // 管理员登录视图组件属性接口
 export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) => {
@@ -25,13 +26,16 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
     setError(false);
     
     try {
+      // 对密码进行哈希处理
+      const hashedPassword = await sha256(password);
+      
       // 调用后端登录接口
       const response = await fetch("http://localhost:8080/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password: hashedPassword }),
       });
       
       const data = await response.json();
