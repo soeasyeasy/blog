@@ -13,7 +13,7 @@ const DB_KEY_MEMOS = "blog_memos_data";
 const DB_KEY_TODOS = "blog_todos_data";
 const DB_KEY_SCHEDULES = "blog_schedules_data";
 // 后端 API 基础 URL
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 // --- 默认数据（用于 fallback） ---
 
