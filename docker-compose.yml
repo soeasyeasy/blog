@@ -6,6 +6,7 @@ services:
     container_name: springboot-app
     volumes:
       - ./app.jar:/app/app.jar:ro
+      - ./data:/app/data
     working_dir: /app
     command: ["java", "-jar", "app.jar","--server.port=18080"]
     expose:

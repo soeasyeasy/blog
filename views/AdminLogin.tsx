@@ -8,6 +8,7 @@ import React, { useState } from "react";
 import { Settings } from "lucide-react";
 import { sha256 } from "../lib/utils";
 import { validateUsername, validatePassword } from "../lib/validation";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 
 // 管理员登录视图组件属性接口
 export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) => {
@@ -50,7 +51,7 @@ export const AdminLogin = ({ onLogin }: { onLogin: (token: string) => void }) =>
       const hashedPassword = await sha256(password);
       
       // 调用后端登录接口
-      const response = await fetch("http://localhost:8080/api/login", {
+      const response = await fetch(BASE_URL+"/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

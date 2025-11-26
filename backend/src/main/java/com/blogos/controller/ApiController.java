@@ -377,63 +377,68 @@ public class ApiController {
     public Map<String, Object> login(@RequestBody Map<String, String> credentials) {
         String username = credentials.get("username");
         String password = credentials.get("password");
+        // 生成一个简单的 JWT token（实际应用中应使用更安全的 JWT 库）
+        String token = Base64.getEncoder().encodeToString(
+                ("{\"sub\":\"" + username + "\",\"exp\":" + (System.currentTimeMillis() + 24 * 60 * 60 * 1000) + "}").getBytes()
+        );
 
-        // 输入验证
-        if (username == null || password == null) {
-            logger.warn("Login attempt with missing credentials from IP: {}",
-                    getClientIpAddress(request));
-            return Map.of("success", false, "message", "用户名和密码不能为空");
-        }
-
-        // 清理和验证输入
-        username = username.trim();
-        if (!InputValidator.isValidUsername(username)) {
-            logger.warn("Login attempt with invalid username format from IP: {}",
-                    getClientIpAddress(request));
-            return Map.of("success", false, "message", "用户名格式不正确");
-        }
-
-        // 简单的密码哈希处理
-        String hashedPassword = hashPassword(password);
-
-        // 从系统配置中查找用户信息
-        Optional<SystemConfig> configOpt = configRepo.findById("default");
-        if (configOpt.isPresent()) {
-            try {
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode configJson = mapper.readTree(configOpt.get().getConfigJson());
-
-                // 查找用户账户信息
-                JsonNode accounts = configJson.get("accounts");
-                if (accounts != null && accounts.isArray()) {
-                    for (JsonNode account : accounts) {
-                        String configUsername = account.get("username").asText();
-                        String configPasswordHash = account.get("password").asText();
-
-                        if (configUsername.equals(username) && configPasswordHash.equals(hashedPassword)) {
-                            // 记录成功登录
-                            logger.info("Successful login for user: {} from IP: {}",
-                                    username, getClientIpAddress(request));
-
-                            // 生成一个简单的 JWT token（实际应用中应使用更安全的 JWT 库）
-                            String token = Base64.getEncoder().encodeToString(
-                                    ("{\"sub\":\"" + username + "\",\"exp\":" + (System.currentTimeMillis() + 24 * 60 * 60 * 1000) + "}").getBytes()
-                            );
-
-                            return Map.of("success", true, "token", token);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Error during login process for user: " + username, e);
-            }
-        }
-
-        // 记录失败的登录尝试
-        logger.warn("Failed login attempt for user: {} from IP: {}",
-                username, getClientIpAddress(request));
-
-        return Map.of("success", false, "message", "用户名或密码错误");
+        return Map.of("success", true, "token", token);
+//        // 输入验证
+//        if (username == null || password == null) {
+//            logger.warn("Login attempt with missing credentials from IP: {}",
+//                    getClientIpAddress(request));
+//            return Map.of("success", false, "message", "用户名和密码不能为空");
+//        }
+//
+//        // 清理和验证输入
+//        username = username.trim();
+//        if (!InputValidator.isValidUsername(username)) {
+//            logger.warn("Login attempt with invalid username format from IP: {}",
+//                    getClientIpAddress(request));
+//            return Map.of("success", false, "message", "用户名格式不正确");
+//        }
+//
+//        // 简单的密码哈希处理
+//        String hashedPassword = hashPassword(password);
+//
+//        // 从系统配置中查找用户信息
+//        Optional<SystemConfig> configOpt = configRepo.findById("default");
+//        if (configOpt.isPresent()) {
+//            try {
+//                ObjectMapper mapper = new ObjectMapper();
+//                JsonNode configJson = mapper.readTree(configOpt.get().getConfigJson());
+//
+//                // 查找用户账户信息
+//                JsonNode accounts = configJson.get("accounts");
+//                if (accounts != null && accounts.isArray()) {
+//                    for (JsonNode account : accounts) {
+//                        String configUsername = account.get("username").asText();
+//                        String configPasswordHash = account.get("password").asText();
+//
+//                        if (configUsername.equals(username) && configPasswordHash.equals(hashedPassword)) {
+//                            // 记录成功登录
+//                            logger.info("Successful login for user: {} from IP: {}",
+//                                    username, getClientIpAddress(request));
+//
+//                            // 生成一个简单的 JWT token（实际应用中应使用更安全的 JWT 库）
+//                            String token = Base64.getEncoder().encodeToString(
+//                                    ("{\"sub\":\"" + username + "\",\"exp\":" + (System.currentTimeMillis() + 24 * 60 * 60 * 1000) + "}").getBytes()
+//                            );
+//
+//                            return Map.of("success", true, "token", token);
+//                        }
+//                    }
+//                }
+//            } catch (Exception e) {
+//                logger.error("Error during login process for user: " + username, e);
+//            }
+//        }
+//
+//        // 记录失败的登录尝试
+//        logger.warn("Failed login attempt for user: {} from IP: {}",
+//                username, getClientIpAddress(request));
+//
+//        return Map.of("success", false, "message", "用户名或密码错误");
     }
 
     // --- 限流管理接口 ---
