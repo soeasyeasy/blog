@@ -1,8 +1,16 @@
-
 import React, { useMemo } from "react";
 import { generateHeadingId } from "../lib/utils";
+import { ChevronLeft, Menu } from "lucide-react";
 
-export const TableOfContents = ({ content }: { content: string }) => {
+export const TableOfContents = ({ 
+  content, 
+  isCollapsed = false,
+  onToggleCollapse 
+}: { 
+  content: string;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}) => {
   const headings = useMemo(() => {
     const lines = content.split('\n');
     return lines
@@ -20,9 +28,32 @@ export const TableOfContents = ({ content }: { content: string }) => {
 
   if (headings.length === 0) return null;
 
+  if (isCollapsed) {
+    return (
+      <div className="hidden lg:block sticky top-32 self-start ml-8">
+        <button
+          onClick={onToggleCollapse}
+          className="p-2 rounded-full bg-white border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+          title="展开目录"
+        >
+          <Menu className="w-4 h-4 text-gray-600" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <nav className="hidden lg:block w-64 sticky top-32 self-start pl-6 border-l border-gray-100 ml-8 max-h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar">
-      <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">目录</h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest">目录</h4>
+        <button
+          onClick={onToggleCollapse}
+          className="p-1 rounded hover:bg-gray-100 transition-colors"
+          title="收起目录"
+        >
+          <ChevronLeft className="w-4 h-4 text-gray-500" />
+        </button>
+      </div>
       <ul className="space-y-2.5">
         {headings.map((h, i) => (
           <li 
@@ -40,13 +71,18 @@ export const TableOfContents = ({ content }: { content: string }) => {
                 document.getElementById(h.id)?.scrollIntoView({ behavior: 'smooth' });
               }}
               className={`
-                block text-sm transition-all duration-200 truncate
+                block text-sm transition-all duration-200 truncate pr-2
                 ${h.level === 1 ? 'font-bold text-[#1D1D1F]' : 'text-gray-500 hover:text-[var(--theme-color)]'}
                 ${h.level === 3 ? 'text-xs opacity-90' : ''}
-                hover:translate-x-1
               `}
+              style={{ 
+                transform: 'translateX(0)',
+                transition: 'transform 0.2s ease'
+              }}
             >
-              {h.text}
+              <span className="inline-block w-full truncate" title={h.text}>
+                {h.text}
+              </span>
             </a>
           </li>
         ))}

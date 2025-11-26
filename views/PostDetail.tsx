@@ -24,6 +24,7 @@ export const PostDetail = ({ post: initialPost, onBack }: { post: Post, onBack: 
   const [isLiked, setIsLiked] = useState(false);  // 是否已点赞
   const [copied, setCopied] = useState(false);    // 是否已复制链接
   const [showShareMenu, setShowShareMenu] = useState(false);  // 是否显示分享菜单
+  const [isTocCollapsed, setIsTocCollapsed] = useState(false); // 目录是否收起
 
   // 当初始文章变化时更新状态
   useEffect(() => {
@@ -96,6 +97,13 @@ export const PostDetail = ({ post: initialPost, onBack }: { post: Post, onBack: 
       setShowShareMenu(false);
   };
 
+  /**
+   * 切换目录收起/展开状态
+   */
+  const toggleTocCollapse = () => {
+    setIsTocCollapsed(!isTocCollapsed);
+  };
+
   return (
     <div className="animate-slide-up relative pb-24">
       {/* 返回按钮 */}
@@ -109,7 +117,7 @@ export const PostDetail = ({ post: initialPost, onBack }: { post: Post, onBack: 
 
       <div className="flex flex-col lg:flex-row gap-8 items-start">
         {/* 文章内容区域 */}
-        <article className="flex-1 bg-white rounded-[40px] shadow-xl p-8 sm:p-16 border border-gray-100 min-w-0 relative overflow-hidden">
+        <article className={`flex-1 bg-white rounded-[40px] shadow-xl p-8 sm:p-16 border border-gray-100 min-w-0 relative overflow-hidden ${isTocCollapsed ? 'lg:max-w-[calc(100vw-120px)]' : ''}`}>
           <header className="mb-12 text-center space-y-6">
              {/* 分类和标签 */}
              <div className="flex items-center justify-center gap-3">
@@ -157,7 +165,11 @@ export const PostDetail = ({ post: initialPost, onBack }: { post: Post, onBack: 
         </article>
 
         {/* 目录导航 */}
-        <TableOfContents content={post.content} />
+        <TableOfContents 
+          content={post.content} 
+          isCollapsed={isTocCollapsed}
+          onToggleCollapse={toggleTocCollapse}
+        />
       </div>
 
       {/* 固定底部操作栏 */}

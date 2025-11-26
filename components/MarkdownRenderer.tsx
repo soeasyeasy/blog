@@ -171,16 +171,16 @@ const parseBlocks = (markdown: string): Block[] => {
     }
 
     // 5. Lists (Unordered & Ordered & Task)
-    const isList = /^\s*(-|\*|\d+\.)\s/.test(line);
+    const isList = /^\s*(-|\+|\*|\d+\.)\s/.test(line);
     if (isList) {
       const indent = line.search(/\S/);
-      const isTask = /^\s*-\s\[( |x)\]/.test(line);
-      let content = line.replace(/^\s*(-|\*|\d+\.)\s/, '');
+      const isTask = /^\s*[-+*]\s\[( |x)\]/.test(line);
+      let content = line.replace(/^\s*(-|\+|\*|\d+\.)\s/, '');
       let checked = undefined;
 
       if (isTask) {
-          checked = /^\s*-\s\[x\]/.test(line);
-          content = line.replace(/^\s*-\s\[( |x)\]/, '');
+          checked = /^\s*[-+*]\s\[x\]/.test(line);
+          content = line.replace(/^\s*[-+*]\s\[( |x)\]/, '');
       }
 
       const listItem: ListItem = { content, indent, checked };
